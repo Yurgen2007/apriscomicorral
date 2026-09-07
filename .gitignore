@@ -1,0 +1,32 @@
+# Dependencias de Composer
+/vendor/
+
+# Archivos subidos por usuarios
+/uploads/
+
+# Archivos temporales y logs
+/temp/
+*.log
+
+# Variables de entorno (proteger credenciales)
+.env
+.env.local
+.env.*.local
+
+# Archivos de IDE
+.idea/
+.vscode/
+*.sublime-project
+*.sublime-workspace
+
+# Archivos generados por el sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Composer binario local (si se descarga)
+composer.phar
+
+# PHP
+.php_cs.cache
+.phpunit.result.cache
