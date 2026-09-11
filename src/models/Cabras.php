@@ -715,7 +715,7 @@ class Cabra {
 // Obtener cabras por sexo excluyendo una ID específica (para evitar auto-parentesco)
 public function getBySexExcluding($sex, $excludeId) {
     try {
-        $query = "SELECT * FROM cabras WHERE sexo = :sex AND estado = 'ACTIVA' AND id_cabra != :exclude_id ORDER BY nombre";
+        $query = "SELECT * FROM cabras WHERE sexo = :sex AND id_cabra != :exclude_id ORDER BY nombre";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':sex', $sex);
         $stmt->bindParam(':exclude_id', $excludeId, PDO::PARAM_INT);
@@ -732,7 +732,7 @@ public function getBySexExcluding($sex, $excludeId) {
 // También mejora el método getBySex() original para que retorne array vacío en caso de error
 public function getBySex($sex) {
     try {
-        $query = "SELECT * FROM cabras WHERE sexo = :sex AND estado = 'ACTIVA' ORDER BY nombre";
+        $query = "SELECT * FROM cabras WHERE sexo = :sex ORDER BY nombre";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':sex', $sex);
         $stmt->execute();

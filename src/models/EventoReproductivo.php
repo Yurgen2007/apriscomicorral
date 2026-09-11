@@ -78,7 +78,7 @@ class EventoReproductivo {
     }
 
     public function getSementalesDisponibles() {
-        $sql = "SELECT id_cabra, nombre FROM cabras WHERE sexo = 'MACHO' AND estado = 'ACTIVA'";
+        $sql = "SELECT id_cabra, nombre FROM cabras WHERE sexo = 'MACHO' ORDER BY nombre";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

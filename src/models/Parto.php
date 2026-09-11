@@ -7,7 +7,7 @@ class Parto {
         $this->db = $db;
     }
     public function getPadresDisponibles() {
-    $sql = "SELECT id_cabra, nombre FROM cabras WHERE sexo = 'MACHO' AND estado = 'ACTIVA'";
+        $sql = "SELECT id_cabra, nombre FROM cabras WHERE sexo = 'MACHO' ORDER BY nombre";
     $stmt = $this->db->query($sql);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
