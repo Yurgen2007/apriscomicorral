@@ -12,6 +12,10 @@ class PDFService
     private $db;
     private $pdf;
 
+    // Configuración de corrección de orientación de imágenes
+    private const AUTO_FIX_ORIENTATION_WITHOUT_EXIF = true; // Heurística para imágenes sin EXIF rotadas físicamente
+    private const MAX_ASPECT_RATIO_FOR_HEURISTIC = 2.0;     // Ratio máximo para considerar rotación (ancho/alto o alto/ancho)
+
     // Paleta de colores cafés y tierras moderna
     private $colorCafePrimario = [101, 67, 33];       // Café oscuro elegante
     private $colorCafeSecundario = [139, 90, 43];     // Café medio cálido
@@ -399,7 +403,8 @@ class PDFService
     }
 
     /**
-     * Asegura que la imagen esté en orientación vertical. Devuelve la ruta a la imagen (original o temporal) y marca si se creó temporal.
+     * Asegura que la imagen esté en orientación correcta según EXIF.
+     * Devuelve la ruta a la imagen (original o temporal) y marca si se creó temporal.
      */
     private function ensureVerticalImage($srcPath, &$createdTemp = false)
     {
@@ -418,18 +423,39 @@ class PDFService
         // Intentar leer orientación EXIF (si está disponible)
         if (function_exists('exif_read_data')) {
             try {
-                $exif = @exif_read_data($srcPath);
-                if (!empty($exif['Orientation'])) {
-                    $orientation = (int)$exif['Orientation'];
+                // Leer EXIF de todas las secciones posibles (IFD0, THUMBNAIL, etc.)
+                $exif = @exif_read_data($srcPath, null, true);
+                if (!empty($exif)) {
+                    // Buscar Orientation en IFD0 principalmente
+                    if (!empty($exif['IFD0']['Orientation'])) {
+                        $orientation = (int)$exif['IFD0']['Orientation'];
+                    } elseif (!empty($exif['THUMBNAIL']['Orientation'])) {
+                        $orientation = (int)$exif['THUMBNAIL']['Orientation'];
+                    } elseif (!empty($exif['Orientation'])) {
+                        // Fallback a clave plana
+                        $orientation = (int)$exif['Orientation'];
+                    }
                 }
             } catch (Exception $e) {
                 $orientation = 0;
             }
         }
 
-        // Si no hay orientación EXIF, no forzar rotación automática (evita rotaciones incorrectas)
+        // Si no hay orientación EXIF o es normal, aplicar heurística opcional
+        // para detectar imágenes rotadas físicamente sin EXIF (ej. WhatsApp, capturas)
         if ($orientation === 0 || $orientation === 1) {
-            return $srcPath;
+            if (self::AUTO_FIX_ORIENTATION_WITHOUT_EXIF) {
+                $aspectRatio = $srcW / $srcH;
+                // Si la imagen tiene aspecto muy alargado (ratio > 2.0 o < 0.5),
+                // podría ser una foto rotada 90° sin EXIF
+                // Rotamos 90° CW (-90 en imagerotate) para corregir
+                if ($aspectRatio > self::MAX_ASPECT_RATIO_FOR_HEURISTIC || $aspectRatio < (1 / self::MAX_ASPECT_RATIO_FOR_HEURISTIC)) {
+                    $orientation = 6; // Tratar como si fuera Orientation 6 (rotar 90° CW)
+                }
+            }
+            if ($orientation === 0 || $orientation === 1) {
+                return $srcPath;
+            }
         }
 
         // Cargar imagen con GD
@@ -454,14 +480,15 @@ class PDFService
         if (!$img) return $srcPath;
 
         // Aplicar transformaciones según EXIF Orientation
-        // 1 - Normal
-        // 2 - Mirror horizontal
+        // imagerotate rota en sentido antihorario (counter-clockwise)
+        // 1 - Normal (sin cambios)
+        // 2 - Mirror horizontal (flip H)
         // 3 - Rotate 180
-        // 4 - Mirror vertical
-        // 5 - Mirror horizontal and rotate 270 CW
-        // 6 - Rotate 90 CW
-        // 7 - Mirror horizontal and rotate 90 CW
-        // 8 - Rotate 270 CW
+        // 4 - Mirror vertical (flip V)
+        // 5 - Mirror H + Rotate 90 CCW  -> corregir: Rotate 90 CW + Mirror H
+        // 6 - Rotate 90 CW              -> corregir: Rotate 90 CCW (-90)
+        // 7 - Mirror H + Rotate 90 CW   -> corregir: Rotate 90 CCW + Mirror H
+        // 8 - Rotate 270 CW (90 CCW)    -> corregir: Rotate 90 CW (-90)
 
         $transformed = $img;
         switch ($orientation) {
@@ -482,30 +509,29 @@ class PDFService
                     $transformed = $this->imageFlipFallback($transformed, 'vertical');
                 }
                 break;
-            case 5: // Mirror horizontal and rotate 270 CW
+            case 5: // Mirror H + Rotate 90 CCW -> corregir: Rotate 90 CW (-90) + Mirror H
+                $transformed = @imagerotate($transformed, -90, 0);
                 if (function_exists('imageflip')) {
                     imageflip($transformed, IMG_FLIP_HORIZONTAL);
                 } else {
                     $transformed = $this->imageFlipFallback($transformed, 'horizontal');
                 }
+                break;
+            case 6: // Rotate 90 CW -> corregir: Rotate 90 CCW (-90)
                 $transformed = @imagerotate($transformed, -90, 0);
                 break;
-            case 6: // Rotate 90 CW
-                $transformed = @imagerotate($transformed, -90, 0);
-                break;
-            case 7: // Mirror horizontal and rotate 90 CW
+            case 7: // Mirror H + Rotate 90 CW -> corregir: Rotate 90 CCW (90) + Mirror H
+                $transformed = @imagerotate($transformed, 90, 0);
                 if (function_exists('imageflip')) {
                     imageflip($transformed, IMG_FLIP_HORIZONTAL);
                 } else {
                     $transformed = $this->imageFlipFallback($transformed, 'horizontal');
                 }
-                $transformed = @imagerotate($transformed, 90, 0);
                 break;
-            case 8: // Rotate 270 CW (90 CCW)
-                $transformed = @imagerotate($transformed, 90, 0);
+            case 8: // Rotate 270 CW (90 CCW) -> corregir: Rotate 90 CW (-90)
+                $transformed = @imagerotate($transformed, -90, 0);
                 break;
             default:
-                // no action
                 break;
         }
 
@@ -537,37 +563,6 @@ class PDFService
 
         imagedestroy($img);
         if ($transformed !== $img) imagedestroy($transformed);
-
-        if ($saved) {
-            $createdTemp = true;
-            return $tmpFileWithExt;
-        }
-
-        @unlink($tmpFileWithExt);
-        return $srcPath;
-        // Guardar en temporal
-        $tmpDir = sys_get_temp_dir();
-        $tmpFile = tempnam($tmpDir, 'pdf_rot_');
-        $tmpFileWithExt = $tmpFile . '.' . $ext;
-        rename($tmpFile, $tmpFileWithExt);
-
-        $saved = false;
-        switch ($ext) {
-            case 'jpg':
-                $saved = imagejpeg($rotated, $tmpFileWithExt, 90);
-                break;
-            case 'png':
-                imagealphablending($rotated, false);
-                imagesavealpha($rotated, true);
-                $saved = imagepng($rotated, $tmpFileWithExt);
-                break;
-            case 'gif':
-                $saved = imagegif($rotated, $tmpFileWithExt);
-                break;
-        }
-
-        imagedestroy($img);
-        imagedestroy($rotated);
 
         if ($saved) {
             $createdTemp = true;
@@ -636,6 +631,55 @@ class PDFService
         $historial = $historialModel->getByCabra($id_cabra);
         $controles = $controlModel->getByCabra($id_cabra);
         $documentos = $docModel->getByCabra($id_cabra);
+
+        // ==========================================
+        // REGISTROS PARA MOSTRAR EN EL PDF
+        // ==========================================
+
+        // Eventos reproductivos: solo el último
+        $eventosMostrar = $eventos;
+
+        if (!empty($eventosMostrar)) {
+            usort($eventosMostrar, function ($a, $b) {
+                return strtotime($b['fecha_evento'] ?? '') <=> strtotime($a['fecha_evento'] ?? '');
+            });
+
+            $eventosMostrar = [$eventosMostrar[0]];
+        }
+
+
+        // Controles sanitarios: solo el último
+        $controlesMostrar = $controles;
+
+        if (!empty($controlesMostrar)) {
+            usort($controlesMostrar, function ($a, $b) {
+                return strtotime($b['fecha_control'] ?? '') <=> strtotime($a['fecha_control'] ?? '');
+            });
+
+            $controlesMostrar = [$controlesMostrar[0]];
+        }
+
+
+        // Historial de propiedad: solo el último
+        $historialMostrar = $historial;
+
+        if (!empty($historialMostrar)) {
+            usort($historialMostrar, function ($a, $b) {
+                return strtotime($b['fecha_inicio'] ?? '') <=> strtotime($a['fecha_inicio'] ?? '');
+            });
+
+            $historialMostrar = [$historialMostrar[0]];
+        }
+
+
+        // Partos: TODOS
+        $partosMostrar = $partos;
+
+        if (!empty($partosMostrar)) {
+            usort($partosMostrar, function ($a, $b) {
+                return strtotime($b['fecha_parto'] ?? '') <=> strtotime($a['fecha_parto'] ?? '');
+            });
+        }
 
         // Obtener peso al nacer desde los controles sanitarios
         $pesoNacimiento = 'No registrado';
@@ -736,7 +780,7 @@ class PDFService
             $this->pdf->Cell(0, 10, 'No hay eventos reproductivos registrados.', 0, 1, 'C');
             $this->pdf->Ln(5);
         } else {
-            foreach ($eventos as $e) {
+            foreach ($eventosMostrar as $e) {
                 $semental = $e['nombre_semental'] ?? 'No definido';
                 $observaciones = $e['observaciones'] ?? 'Sin observaciones';
                 $registradoPor = $e['nombre_usuario'] ?? 'Desconocido';
@@ -788,7 +832,7 @@ class PDFService
             $this->pdf->Cell(0, 10, 'No hay controles sanitarios registrados.', 0, 1, 'C');
             $this->pdf->Ln(5);
         } else {
-            foreach ($controles as $c) {
+            foreach ($controlesMostrar as $c) {
                 $this->verificarNuevaPagina(60);
 
                 // Tarjeta principal del control
