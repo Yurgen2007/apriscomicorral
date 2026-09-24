@@ -108,10 +108,10 @@ switch ($uri) {
         $cabraController->stats();
         break;
 
-        case (preg_match('#^/cabras/(\d+)/pdf$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $cabraController->generarPDF();
-    break;
+    case (preg_match('#^/cabras/(\d+)/pdf$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $cabraController->generarPDF();
+        break;
 
 
     // Razas
@@ -183,77 +183,89 @@ switch ($uri) {
         $historialController->delete();
         break;
 
-        // Partos
-case (preg_match('#^/partos/(\d+)/create$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $method === 'GET' ? $partosController->create() : $partosController->store();
-    break;
+    // Partos
+    case (preg_match('#^/partos/(\d+)/create$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $method === 'GET' ? $partosController->create() : $partosController->store();
+        break;
 
-case (preg_match('#^/partos/(\d+)/edit$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $method === 'GET' ? $partosController->edit() : $partosController->update();
-    break;
+    case (preg_match('#^/partos/(\d+)/edit$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $method === 'GET' ? $partosController->edit() : $partosController->update();
+        break;
 
-case (preg_match('#^/partos/(\d+)/delete$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $partosController->delete();
-    break;
+    case (preg_match('#^/partos/(\d+)/delete$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $partosController->delete();
+        break;
 
     // Eventos Reproductivos
-case (preg_match('#^/eventos/(\d+)$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $eventoController->index();
-    break;
+    case (preg_match('#^/eventos/(\d+)$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $eventoController->index();
+        break;
 
-case (preg_match('#^/eventos/(\d+)/create$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $method === 'GET' ? $eventoController->create() : $eventoController->store();
-    break;
+    case (preg_match('#^/eventos/(\d+)/create$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $method === 'GET' ? $eventoController->create() : $eventoController->store();
+        break;
 
-case (preg_match('#^/eventos/(\d+)/edit$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $method === 'GET' ? $eventoController->edit() : $eventoController->update();
-    break;
+    case (preg_match('#^/eventos/(\d+)/edit$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $method === 'GET' ? $eventoController->edit() : $eventoController->update();
+        break;
 
-case (preg_match('#^/eventos/(\d+)/delete$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $eventoController->delete();
-    break;
+    case (preg_match('#^/eventos/(\d+)/delete$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $eventoController->delete();
+        break;
 
 
-// Controles Sanitarios
-case (preg_match('#^/controles/(\d+)/create$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $method === 'GET' ? $controlController->create() : $controlController->store();
-    break;
+    // Controles Sanitarios
+    case (preg_match('#^/controles/(\d+)/create$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $method === 'GET' ? $controlController->create() : $controlController->store();
+        break;
 
-case (preg_match('#^/controles/(\d+)/edit$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $method === 'GET' ? $controlController->edit() : $controlController->update();
-    break;
+    case (preg_match('#^/controles/(\d+)/edit$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $method === 'GET' ? $controlController->edit() : $controlController->update();
+        break;
 
-case (preg_match('#^/controles/(\d+)/delete$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $controlController->delete();
-    break;
+    case (preg_match('#^/controles/(\d+)/delete$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $controlController->delete();
+        break;
 
     case (preg_match('#^/documentos/(\d+)/create$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $method === 'GET' ? $documentosController->create() : $documentosController->store();
-    break;
+        $_GET['id'] = $matches[1];
+        $method === 'GET' ? $documentosController->create() : $documentosController->store();
+        break;
 
-case (preg_match('#^/documentos/(\d+)/delete$#', $uri, $matches) ? true : false):
-    $_GET['id'] = $matches[1];
-    $documentosController->delete();
-    break;
+    case (preg_match('#^/documentos/(\d+)/delete$#', $uri, $matches) ? true : false):
+        $_GET['id'] = $matches[1];
+        $documentosController->delete();
+        break;
 
     // Producción lechera
     case '/control-produccion-lechera':
         $controlProduccionController->index();
         break;
 
+    case '/control-produccion-lechera/productoras':
+        $controlProduccionController->producers();
+        break;
+
+    case (preg_match('#^/control-produccion-lechera/cabra/(\d+)$#', $uri, $matches) ? true : false):
+        $controlProduccionController->byCabra((int)$matches[1]);
+        break;
+
     case '/control-produccion-lechera/create':
         $method === 'GET' ? $controlProduccionController->create() : $controlProduccionController->store();
+        break;
+
+    case '/control-produccion-lechera/condicion-sanitaria':
+        $controlProduccionController->sanitaryCondition();
         break;
 
     case (preg_match('#^/control-produccion-lechera/(\d+)/edit$#', $uri, $matches) ? true : false):

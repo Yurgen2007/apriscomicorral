@@ -5,6 +5,7 @@ require_once __DIR__ . '/../../models/Parto.php';
 require_once __DIR__ . '/../../models/EventoReproductivo.php';
 require_once __DIR__ . '/../../models/ControlSanitario.php';
 require_once __DIR__ . '/../../models/DocumentosCabras.php';
+require_once __DIR__ . '/../../models/Lactancia.php';
 
 // Incluir configuración y helpers necesarios
 require_once __DIR__ . '/../../../config/database.php';
@@ -43,6 +44,8 @@ $controles_sanitarios = $controlSanitarioModel->getByCabra($cabra['id_cabra']);
 
 $documentosModel = new DocumentosCabras($db);
 $documentos_cabra = $documentosModel->getByCabra($cabra['id_cabra']);
+$lactanciaModel = new Lactancia($db);
+$lactancias = $lactanciaModel->getAll($cabra['id_cabra']);
 ?>
 
 <!DOCTYPE html>
@@ -225,6 +228,33 @@ $documentos_cabra = $documentosModel->getByCabra($cabra['id_cabra']);
             </div>
         </div>
         <?php if ($cabra['sexo'] === 'HEMBRA'): ?>
+            <div class="info-group">
+                <h3>🥛 Historial de lactancias</h3>
+                <?php if (!empty($lactancias)): ?>
+                    <div class="info-items">
+                        <?php foreach ($lactancias as $lactancia): ?>
+                            <?php
+                            $inicioProduccion = $lactancia['fecha_primer_registro'] ?: $lactancia['fecha_inicio'];
+                            $finProduccion = $lactancia['fecha_ultimo_registro'] ?: $inicioProduccion;
+                            $intervalo = (new DateTime($inicioProduccion))->diff(new DateTime($finProduccion));
+                            $duracion = $intervalo->days;
+                            $mesesProduccion = ($intervalo->y * 12) + $intervalo->m;
+                            ?>
+                            <div class="info-item">
+                                <div>
+                                    <strong>Lactancia #<?= (int)$lactancia['numero_lactancia'] ?></strong><br>
+                                    <strong>Parto:</strong> <?= e($lactancia['fecha_parto']) ?><br>
+                                    <strong>Periodo con registros:</strong> <?= e($inicioProduccion) ?> - <?= e($finProduccion) ?><br>
+                                    <strong>Duración registrada:</strong> <?= (int)$mesesProduccion ?> meses (<?= (int)$duracion ?> días)<br>
+                                    <strong>Total:</strong> <?= number_format((float)$lactancia['total_litros'], 2, ',', '.') ?> L<br>
+                                    <strong>Máxima:</strong> <?= $lactancia['produccion_maxima'] === null ? '-' : number_format((float)$lactancia['produccion_maxima'], 2, ',', '.') . ' L' ?><br>
+                                    <strong>Estado de lactancia:</strong> <?= e($lactancia['estado']) ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?><p class="text-muted">No hay lactancias registradas.</p><?php endif; ?>
+            </div>
             <!-- Sección adicional: Historial de Partos -->
             <div class="info-group">
                 <h3>👶 Historial de Partos</h3>

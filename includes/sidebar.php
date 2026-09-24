@@ -245,10 +245,15 @@
 
     /* Estilos base del logo */
     .logo-image {
-        width: 240px;
-        height: 240px;
+        width: 208px;
+        height: 208px;
         object-fit: contain;
         border-radius: 8px;
+    }
+
+    .sidebar-header .logo-container {
+        width: 100%;
+        justify-content: center;
     }
 
     /* Estilos para el botón hamburguesa */
@@ -364,7 +369,7 @@
             position: fixed !important;
             top: 0;
             left: -100%;
-            width: 280px;
+            width: min(280px, 86vw);
             height: 100vh;
             z-index: 1000;
             transition: left 0.3s ease;
@@ -392,8 +397,8 @@
 
         /* Ajustar logo para móvil */
         .logo-image {
-            width: 200px !important;
-            height: 200px !important;
+            width: 208px !important;
+            height: 208px !important;
             border: 2px solid var(--tan);
             border-radius: 12px;
         }
@@ -588,8 +593,8 @@
     /* Ajustes para pantallas muy pequeñas */
     @media (max-width: 480px) {
         .sidebar {
-            width: 100%;
-            left: -100%;
+            width: 86vw;
+            left: -86vw;
             border-right: none;
             border-bottom: 3px solid var(--tan);
         }
@@ -618,8 +623,8 @@
         }
 
         .logo-image {
-            width: 70px;
-            height: 70px;
+            width: 208px;
+            height: 208px;
         }
     }
 

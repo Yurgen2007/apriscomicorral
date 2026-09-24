@@ -1,16 +1,19 @@
 <?php
 // src/controllers/ControlSanitarioController.php
 require_once __DIR__ . '/../models/ControlSanitario.php';
+require_once __DIR__ . '/../models/Lactancia.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../includes/functions.php';
 
 class ControlSanitarioController {
     private $model;
     private $db;
+    private $lactanciaModel;
 
     public function __construct() {
         $this->db = (new Database())->getConnection();
         $this->model = new ControlSanitario($this->db);
+        $this->lactanciaModel = new Lactancia($this->db);
     }
 
     private function isLoggedIn() {
@@ -55,7 +58,15 @@ class ControlSanitarioController {
         $data = $this->getDataFromRequest();
         $data['foto_ubre'] = $this->handleUbreUpload();
 
-        $this->model->create($data);
+        if (!$this->model->create($data)) {
+            $_SESSION['error'] = 'No fue posible registrar el control sanitario';
+            $this->redirectToCabra($data['id_cabra']);
+        }
+        $this->lactanciaModel->closeForSanitaryStatus(
+            $data['id_cabra'],
+            $data['fecha_control'],
+            $data['condicion_especial'] ?? ''
+        );
         $_SESSION['success'] = 'Control sanitario registrado correctamente';
         $this->redirectToCabra($data['id_cabra']);
     }
@@ -88,7 +99,15 @@ class ControlSanitarioController {
         $foto = $this->handleUbreUpload();
         $data['foto_ubre'] = $foto ?? $existing['foto_ubre'];
 
-        $this->model->update($id, $data);
+        if (!$this->model->update($id, $data)) {
+            $_SESSION['error'] = 'No fue posible actualizar el control sanitario';
+            $this->redirectToCabra($data['id_cabra']);
+        }
+        $this->lactanciaModel->closeForSanitaryStatus(
+            $data['id_cabra'],
+            $data['fecha_control'],
+            $data['condicion_especial'] ?? ''
+        );
         $_SESSION['success'] = 'Control sanitario actualizado correctamente';
         $this->redirectToCabra($data['id_cabra']);
     }

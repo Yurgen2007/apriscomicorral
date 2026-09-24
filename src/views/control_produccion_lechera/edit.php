@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../../includes/functions.php';
 
 $cabras = $cabras ?? [];
 $control = $control ?? [];
+$lactancias = $lactancias ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -29,15 +30,18 @@ $control = $control ?? [];
                     <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
 
                     <div class="form-group">
-                        <label for="id_cabra">🐐 Cabra</label>
-                        <select name="id_cabra" id="id_cabra" required>
-                            <option value="">Seleccione una cabra</option>
-                            <?php foreach ($cabras as $cabra): ?>
-                                <option value="<?php echo e($cabra['id_cabra']); ?>" <?php echo ((int)$control['id_cabra'] === (int)$cabra['id_cabra']) ? 'selected' : ''; ?>>
-                                    <?php echo e($cabra['nombre']); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                        <label for="lactancia_actual">🐐 Lactancia asociada</label>
+                        <input type="text" id="lactancia_actual"
+                               value="Lactancia #<?= (int)($control['numero_lactancia'] ?? $control['id_lactancia']) ?>"
+                               readonly>
+                        <small>La lactancia pertenece al período original y no se puede cambiar desde la edición.</small>
+                    </div>
+
+                    <input type="hidden" name="id_cabra" value="<?= (int)$control['id_cabra'] ?>">
+
+                    <div class="form-group">
+                        <label for="fecha_registro">📅 Fecha del registro</label>
+                        <input type="date" name="fecha_registro" id="fecha_registro" value="<?= e(substr($control['fecha_registro'], 0, 10)) ?>" required>
                     </div>
 
                     <div class="form-group">

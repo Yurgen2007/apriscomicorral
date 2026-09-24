@@ -10,334 +10,321 @@ class ControlProduccionLechera
         $this->conn = $db;
     }
 
-    /**
-     * Obtener todos los controles de producción
-     */
+    private function selectSql()
+    {
+        return "SELECT cpl.id_control_produccion, cpl.id_cabra, cpl.id_lactancia,
+                       cpl.turno_ordeño, cpl.cantidad_litros, cpl.fecha_registro,
+                       c.nombre AS nombre_cabra, l.numero_lactancia,
+                       l.fecha_inicio AS lactancia_inicio,
+                       l.fecha_fin AS lactancia_fin, l.estado AS lactancia_estado,
+                       (
+                           SELECT cs.condicion_especial
+                           FROM controles_sanitarios cs
+                           WHERE cs.id_cabra = cpl.id_cabra
+                             AND DATE(cs.fecha_control) <= DATE(cpl.fecha_registro)
+                           ORDER BY cs.fecha_control DESC, cs.id_control DESC
+                           LIMIT 1
+                       ) AS condicion_sanitaria
+                FROM {$this->table} cpl
+                INNER JOIN cabras c ON c.id_cabra = cpl.id_cabra
+                LEFT JOIN lactancias l ON l.id_lactancia = cpl.id_lactancia";
+    }
+
     public function getAll()
     {
-        $query = "
-            SELECT 
-                cpl.id_control_produccion,
-                cpl.id_cabra,
-                cpl.turno_ordeño,
-                cpl.cantidad_litros,
-                cpl.fecha_registro,
-                c.nombre AS nombre_cabra
-            FROM {$this->table} cpl
-            INNER JOIN cabras c 
-                ON cpl.id_cabra = c.id_cabra
-            ORDER BY cpl.fecha_registro DESC
-        ";
-
-        $stmt = $this->conn->prepare($query);
+        $stmt = $this->conn->prepare($this->selectSql() . ' ORDER BY cpl.fecha_registro DESC');
         $stmt->execute();
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtener un control por ID
-     */
     public function getById($id)
     {
-        $query = "
-            SELECT 
-                cpl.id_control_produccion,
-                cpl.id_cabra,
-                cpl.turno_ordeño,
-                cpl.cantidad_litros,
-                cpl.fecha_registro,
-                c.nombre AS nombre_cabra
-            FROM {$this->table} cpl
-            INNER JOIN cabras c 
-                ON cpl.id_cabra = c.id_cabra
-            WHERE cpl.id_control_produccion = :id
-            LIMIT 1
-        ";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
-
+        $stmt = $this->conn->prepare($this->selectSql() . ' WHERE cpl.id_control_produccion = :id LIMIT 1');
+        $stmt->execute([':id' => (int)$id]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtener producción de una cabra
-     */
-    public function getByCabra($id_cabra)
+    public function getByCabra($idCabra)
     {
-        $query = "
-            SELECT 
-                cpl.id_control_produccion,
-                cpl.id_cabra,
-                cpl.turno_ordeño,
-                cpl.cantidad_litros,
-                cpl.fecha_registro,
-                c.nombre AS nombre_cabra
-            FROM {$this->table} cpl
-            INNER JOIN cabras c 
-                ON cpl.id_cabra = c.id_cabra
-            WHERE cpl.id_cabra = :id_cabra
-            ORDER BY cpl.fecha_registro DESC
-        ";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_cabra', $id_cabra, PDO::PARAM_INT);
-        $stmt->execute();
-
+        $stmt = $this->conn->prepare($this->selectSql() . ' WHERE cpl.id_cabra = :id_cabra ORDER BY cpl.fecha_registro DESC');
+        $stmt->execute([':id_cabra' => (int)$idCabra]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function getPaginated($limit, $offset)
     {
-        $query = "
-            SELECT 
-                cpl.id_control_produccion,
-                cpl.id_cabra,
-                cpl.turno_ordeño,
-                cpl.cantidad_litros,
-                cpl.fecha_registro,
-                c.nombre AS nombre_cabra
-            FROM {$this->table} cpl
-            INNER JOIN cabras c 
-                ON cpl.id_cabra = c.id_cabra
-            ORDER BY cpl.fecha_registro DESC
-            LIMIT :limit OFFSET :offset
-        ";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
+        $stmt = $this->conn->prepare($this->selectSql() . ' ORDER BY cpl.fecha_registro DESC LIMIT :limit OFFSET :offset');
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         $stmt->execute();
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getPaginatedFiltered($searchTerm, $id_cabra, $limit, $offset)
+    public function getPaginatedFiltered($search, $idCabra, $idLactancia, $fechaDesde, $fechaHasta, $limit, $offset)
     {
         $where = [];
-        $params = [
-            ':limit' => $limit,
-            ':offset' => $offset
-        ];
-
-        if ($id_cabra > 0) {
+        $params = [];
+        if ($idCabra > 0) {
             $where[] = 'cpl.id_cabra = :id_cabra';
-            $params[':id_cabra'] = $id_cabra;
+            $params[':id_cabra'] = [(int)$idCabra, PDO::PARAM_INT];
         }
-
-        if (!empty($searchTerm)) {
-            $where[] = 'c.nombre LIKE :search_term';
-            $params[':search_term'] = '%' . trim($searchTerm) . '%';
+        if ($idLactancia > 0) {
+            $where[] = 'cpl.id_lactancia = :id_lactancia';
+            $params[':id_lactancia'] = [(int)$idLactancia, PDO::PARAM_INT];
         }
-
-        $sql = "
-            SELECT 
-                cpl.id_control_produccion,
-                cpl.id_cabra,
-                cpl.turno_ordeño,
-                cpl.cantidad_litros,
-                cpl.fecha_registro,
-                c.nombre AS nombre_cabra
-            FROM {$this->table} cpl
-            INNER JOIN cabras c 
-                ON cpl.id_cabra = c.id_cabra";
-
-        if (!empty($where)) {
+        if ($search !== '') {
+            $where[] = 'c.nombre LIKE :search';
+            $params[':search'] = ['%' . $search . '%', PDO::PARAM_STR];
+        }
+        if ($fechaDesde !== '') {
+            $where[] = 'DATE(cpl.fecha_registro) >= :fecha_desde';
+            $params[':fecha_desde'] = [$fechaDesde, PDO::PARAM_STR];
+        }
+        if ($fechaHasta !== '') {
+            $where[] = 'DATE(cpl.fecha_registro) <= :fecha_hasta';
+            $params[':fecha_hasta'] = [$fechaHasta, PDO::PARAM_STR];
+        }
+        $sql = $this->selectSql();
+        if ($where) {
             $sql .= ' WHERE ' . implode(' AND ', $where);
         }
-
         $sql .= ' ORDER BY cpl.fecha_registro DESC LIMIT :limit OFFSET :offset';
-
         $stmt = $this->conn->prepare($sql);
-
         foreach ($params as $key => $value) {
-            if ($key === ':limit' || $key === ':offset') {
-                $stmt->bindValue($key, (int)$value, PDO::PARAM_INT);
-            } elseif ($key === ':id_cabra') {
-                $stmt->bindValue($key, (int)$value, PDO::PARAM_INT);
-            } else {
-                $stmt->bindValue($key, $value, PDO::PARAM_STR);
-            }
+            $stmt->bindValue($key, $value[0], $value[1]);
         }
-
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getPaginatedByCabra($id_cabra, $limit, $offset)
-    {
-        $query = "
-            SELECT 
-                cpl.id_control_produccion,
-                cpl.id_cabra,
-                cpl.turno_ordeño,
-                cpl.cantidad_litros,
-                cpl.fecha_registro,
-                c.nombre AS nombre_cabra
-            FROM {$this->table} cpl
-            INNER JOIN cabras c 
-                ON cpl.id_cabra = c.id_cabra
-            WHERE cpl.id_cabra = :id_cabra
-            ORDER BY cpl.fecha_registro DESC
-            LIMIT :limit OFFSET :offset
-        ";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_cabra', $id_cabra, PDO::PARAM_INT);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
-        $stmt->bindParam(':offset', $offset, PDO::PARAM_INT);
-        $stmt->execute();
-
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function count()
     {
-        $query = "SELECT COUNT(*) AS total FROM {$this->table}";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return (int)($row['total'] ?? 0);
+        return (int)$this->conn->query("SELECT COUNT(*) FROM {$this->table}")->fetchColumn();
     }
 
-    public function countFiltered($searchTerm, $id_cabra)
+    public function countFiltered($search, $idCabra, $idLactancia = 0, $fechaDesde = '', $fechaHasta = '')
     {
         $where = [];
         $params = [];
-
-        if ($id_cabra > 0) {
-            $where[] = 'id_cabra = :id_cabra';
-            $params[':id_cabra'] = (int)$id_cabra;
+        if ($idCabra > 0) {
+            $where[] = 'cpl.id_cabra = :id_cabra';
+            $params[':id_cabra'] = [(int)$idCabra, PDO::PARAM_INT];
         }
-
-        if (!empty($searchTerm)) {
-            $where[] = 'id_cabra IN (SELECT id_cabra FROM cabras WHERE nombre LIKE :search_term)';
-            $params[':search_term'] = '%' . trim($searchTerm) . '%';
+        if ($idLactancia > 0) {
+            $where[] = 'cpl.id_lactancia = :id_lactancia';
+            $params[':id_lactancia'] = [(int)$idLactancia, PDO::PARAM_INT];
         }
-
-        $query = "SELECT COUNT(*) AS total FROM {$this->table}";
-        if (!empty($where)) {
-            $query .= ' WHERE ' . implode(' AND ', $where);
+        if ($search !== '') {
+            $where[] = 'c.nombre LIKE :search';
+            $params[':search'] = ['%' . $search . '%', PDO::PARAM_STR];
         }
-
-        $stmt = $this->conn->prepare($query);
+        if ($fechaDesde !== '') {
+            $where[] = 'DATE(cpl.fecha_registro) >= :fecha_desde';
+            $params[':fecha_desde'] = [$fechaDesde, PDO::PARAM_STR];
+        }
+        if ($fechaHasta !== '') {
+            $where[] = 'DATE(cpl.fecha_registro) <= :fecha_hasta';
+            $params[':fecha_hasta'] = [$fechaHasta, PDO::PARAM_STR];
+        }
+        $sql = "SELECT COUNT(*) FROM {$this->table} cpl INNER JOIN cabras c ON c.id_cabra = cpl.id_cabra";
+        if ($where) {
+            $sql .= ' WHERE ' . implode(' AND ', $where);
+        }
+        $stmt = $this->conn->prepare($sql);
         foreach ($params as $key => $value) {
-            if ($key === ':id_cabra') {
-                $stmt->bindValue($key, (int)$value, PDO::PARAM_INT);
-            } else {
-                $stmt->bindValue($key, $value, PDO::PARAM_STR);
-            }
+            $stmt->bindValue($key, $value[0], $value[1]);
         }
-
         $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return (int)($row['total'] ?? 0);
+        return (int)$stmt->fetchColumn();
     }
 
-    public function countByCabra($id_cabra)
-    {
-        $query = "SELECT COUNT(*) AS total FROM {$this->table} WHERE id_cabra = :id_cabra";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id_cabra', $id_cabra, PDO::PARAM_INT);
-        $stmt->execute();
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        return (int)($row['total'] ?? 0);
-    }
-
-    /**
-     * Obtener las 3 cabras con mayor producción total
-     */
     public function getTop3Producers()
     {
-        $query = "
-            SELECT
-                c.id_cabra,
-                c.nombre AS nombre_cabra,
-                c.foto,
-                SUM(cpl.cantidad_litros) AS total_litros
-            FROM {$this->table} cpl
-            INNER JOIN cabras c
-                ON cpl.id_cabra = c.id_cabra
-            GROUP BY c.id_cabra, c.nombre, c.foto
-            ORDER BY total_litros DESC, c.nombre ASC
-            LIMIT 3
-        ";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-
+        $stmt = $this->conn->query(
+            "SELECT c.id_cabra, c.nombre AS nombre_cabra, c.foto,
+                    SUM(cpl.cantidad_litros) AS total_litros
+             FROM {$this->table} cpl
+             INNER JOIN cabras c ON c.id_cabra = cpl.id_cabra
+             GROUP BY c.id_cabra, c.nombre, c.foto
+             ORDER BY total_litros DESC, c.nombre ASC LIMIT 3"
+        );
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Crear nuevo control
-     * La fecha se genera automáticamente en MySQL
-     */
-    public function create($id_cabra, $turno_ordeño, $cantidad_litros)
+    public function getProducerCards()
     {
-        $query = "
-            INSERT INTO {$this->table}
-            (
-                id_cabra,
-                turno_ordeño,
-                cantidad_litros
-            )
-            VALUES
-            (
-                ?,
-                ?,
-                ?
-            )
-        ";
+        $stmt = $this->conn->query(
+            "SELECT c.id_cabra, c.nombre AS nombre_cabra, c.foto,
+                    SUM(cpl.cantidad_litros) AS total_litros,
+                    COUNT(cpl.id_control_produccion) AS total_registros,
+                    (
+                        SELECT l.numero_lactancia
+                        FROM lactancias l
+                        WHERE l.id_cabra = c.id_cabra AND l.estado = 'EN LACTANCIA'
+                        ORDER BY l.numero_lactancia DESC
+                        LIMIT 1
+                    ) AS lactancia_activa
+             FROM {$this->table} cpl
+             INNER JOIN cabras c ON c.id_cabra = cpl.id_cabra
+             GROUP BY c.id_cabra, c.nombre, c.foto
+             ORDER BY c.nombre ASC"
+        );
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
-        $stmt = $this->conn->prepare($query);
+    public function getAnnualSummary()
+    {
+        $stmt = $this->conn->query(
+            "SELECT anio, id_cabra, nombre_cabra, condicion_sanitaria,
+                    SUM(cantidad_litros) AS total_litros,
+                    MAX(cantidad_litros) AS produccion_maxima,
+                    MAX(CASE WHEN cantidad_litros = pico_grupo
+                             THEN fecha_registro END) AS fecha_produccion_maxima,
+                    COUNT(*) AS total_registros
+             FROM (
+                 SELECT YEAR(cpl.fecha_registro) AS anio, cpl.id_cabra,
+                        c.nombre AS nombre_cabra, cpl.cantidad_litros,
+                        cpl.fecha_registro,
+                        COALESCE((
+                            SELECT cs.condicion_especial
+                            FROM controles_sanitarios cs
+                            WHERE cs.id_cabra = cpl.id_cabra
+                              AND DATE(cs.fecha_control) <= DATE(cpl.fecha_registro)
+                            ORDER BY cs.fecha_control DESC, cs.id_control DESC
+                            LIMIT 1
+                        ), 'SIN CONTROL') AS condicion_sanitaria,
+                        (
+                            SELECT MAX(cpl2.cantidad_litros)
+                            FROM {$this->table} cpl2
+                            WHERE cpl2.id_cabra = cpl.id_cabra
+                              AND YEAR(cpl2.fecha_registro) = YEAR(cpl.fecha_registro)
+                              AND COALESCE((
+                                  SELECT cs2.condicion_especial
+                                  FROM controles_sanitarios cs2
+                                  WHERE cs2.id_cabra = cpl2.id_cabra
+                                    AND DATE(cs2.fecha_control) <= DATE(cpl2.fecha_registro)
+                                  ORDER BY cs2.fecha_control DESC, cs2.id_control DESC
+                                  LIMIT 1
+                              ), 'SIN CONTROL') = COALESCE((
+                                  SELECT cs3.condicion_especial
+                                  FROM controles_sanitarios cs3
+                                  WHERE cs3.id_cabra = cpl.id_cabra
+                                    AND DATE(cs3.fecha_control) <= DATE(cpl.fecha_registro)
+                                  ORDER BY cs3.fecha_control DESC, cs3.id_control DESC
+                                  LIMIT 1
+                              ), 'SIN CONTROL')
+                        ) AS pico_grupo
+                 FROM {$this->table} cpl
+                 INNER JOIN cabras c ON c.id_cabra = cpl.id_cabra
+             ) resumen
+             GROUP BY anio, id_cabra, nombre_cabra, condicion_sanitaria
+             ORDER BY anio DESC, total_litros DESC"
+        );
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 
+    public function getSanitaryConditionAtDate($idCabra, $fecha)
+    {
+        $stmt = $this->conn->prepare(
+            "SELECT condicion_especial, fecha_control
+             FROM controles_sanitarios
+             WHERE id_cabra = :id_cabra AND DATE(fecha_control) <= :fecha
+             ORDER BY fecha_control DESC, id_control DESC
+             LIMIT 1"
+        );
+        $stmt->execute([':id_cabra' => (int)$idCabra, ':fecha' => $fecha]);
+        return $stmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    }
+
+    public function getTotalsBySanitaryCondition()
+    {
+        $stmt = $this->conn->query(
+            "SELECT COALESCE(condicion_sanitaria, 'SIN CONTROL') AS condicion_sanitaria,
+                    SUM(cantidad_litros) AS total_litros,
+                    COUNT(*) AS total_registros
+             FROM (
+                 SELECT cpl.cantidad_litros,
+                        (
+                            SELECT cs.condicion_especial
+                            FROM controles_sanitarios cs
+                            WHERE cs.id_cabra = cpl.id_cabra
+                              AND DATE(cs.fecha_control) <= DATE(cpl.fecha_registro)
+                            ORDER BY cs.fecha_control DESC, cs.id_control DESC
+                            LIMIT 1
+                        ) AS condicion_sanitaria
+                 FROM {$this->table} cpl
+             ) produccion
+             GROUP BY condicion_sanitaria
+             ORDER BY total_litros DESC"
+        );
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function create($idCabra, $idLactancia, $fechaRegistro, $turno, $cantidad)
+    {
+        if (!$idLactancia) {
+            $stmt = $this->conn->prepare(
+                "INSERT INTO {$this->table}
+                 (id_cabra, id_lactancia, fecha_registro, turno_ordeño, cantidad_litros)
+                 VALUES (:id_cabra, NULL, :fecha_registro, :turno, :cantidad)"
+            );
+            return $stmt->execute([
+                ':id_cabra' => (int)$idCabra,
+                ':fecha_registro' => $fechaRegistro,
+                ':turno' => $turno,
+                ':cantidad' => $cantidad
+            ]);
+        }
+
+        $stmt = $this->conn->prepare(
+            "INSERT INTO {$this->table}
+             (id_cabra, id_lactancia, fecha_registro, turno_ordeño, cantidad_litros)
+             SELECT :id_cabra, l.id_lactancia, :fecha_registro, :turno, :cantidad
+             FROM lactancias l
+             WHERE l.id_lactancia = :id_lactancia AND l.id_cabra = :id_cabra_2
+               AND l.estado = 'EN LACTANCIA'
+               AND :fecha_validacion >= l.fecha_inicio
+               AND (l.fecha_fin IS NULL OR :fecha_validacion_2 <= l.fecha_fin)"
+        );
         return $stmt->execute([
-            $id_cabra,
-            $turno_ordeño,
-            $cantidad_litros
+            ':id_cabra' => (int)$idCabra,
+            ':id_lactancia' => (int)$idLactancia,
+            ':fecha_registro' => $fechaRegistro,
+            ':turno' => $turno,
+            ':cantidad' => $cantidad,
+            ':id_cabra_2' => (int)$idCabra,
+            ':fecha_validacion' => $fechaRegistro,
+            ':fecha_validacion_2' => $fechaRegistro
         ]);
     }
 
-    /**
-     * Actualizar control
-     */
-    public function update($id, $id_cabra, $turno_ordeño, $cantidad_litros)
+    public function update($id, $idCabra, $idLactancia, $fechaRegistro, $turno, $cantidad)
     {
-        $query = "
-            UPDATE {$this->table}
-            SET
-                id_cabra = ?,
-                turno_ordeño = ?,
-                cantidad_litros = ?
-            WHERE id_control_produccion = ?
-        ";
-
-        $stmt = $this->conn->prepare($query);
-
+        $stmt = $this->conn->prepare(
+            "UPDATE {$this->table} cpl
+             INNER JOIN lactancias l ON l.id_lactancia = :id_lactancia
+             SET cpl.id_cabra = :id_cabra, cpl.id_lactancia = l.id_lactancia,
+                 cpl.fecha_registro = :fecha_registro, cpl.turno_ordeño = :turno,
+                 cpl.cantidad_litros = :cantidad
+             WHERE cpl.id_control_produccion = :id AND l.id_cabra = :id_cabra_2
+               AND l.estado = 'EN LACTANCIA'
+               AND :fecha_validacion >= l.fecha_inicio
+               AND (l.fecha_fin IS NULL OR :fecha_validacion_2 <= l.fecha_fin)"
+        );
         return $stmt->execute([
-            $id_cabra,
-            $turno_ordeño,
-            $cantidad_litros,
-            $id
+            ':id' => (int)$id, ':id_cabra' => (int)$idCabra,
+            ':id_lactancia' => (int)$idLactancia, ':fecha_registro' => $fechaRegistro,
+            ':turno' => $turno, ':cantidad' => $cantidad,
+            ':id_cabra_2' => (int)$idCabra, ':fecha_validacion' => $fechaRegistro,
+            ':fecha_validacion_2' => $fechaRegistro
         ]);
     }
 
-    /**
-     * Eliminar control
-     */
     public function delete($id)
     {
-        $query = "
-            DELETE FROM {$this->table}
-            WHERE id_control_produccion = :id
-        ";
-
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':id', $id, PDO::PARAM_INT);
-
-        return $stmt->execute();
+        $stmt = $this->conn->prepare("DELETE FROM {$this->table} WHERE id_control_produccion = :id");
+        return $stmt->execute([':id' => (int)$id]);
     }
 }

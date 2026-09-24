@@ -12,11 +12,244 @@
   --light-gray: #999999;
 }
 
+.logo-icon img,
+.logo-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 /* Estilos generales */
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+}
+
+/* ==========================================
+   RESPONSIVE GLOBAL
+   ========================================== */
+
+html {
+  overflow-x: hidden;
+}
+
+body {
+  min-width: 320px;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+  max-width: 100%;
+  font: inherit;
+}
+
+.container,
+.main-content,
+.dashboard-content,
+.dashboard-header,
+.form-container,
+.cabra-detail-container {
+  width: 100%;
+  min-width: 0;
+}
+
+.sidebar ~ .container,
+.sidebar ~ .main-content {
+  width: calc(100% - 280px);
+  margin-left: 280px;
+}
+
+.main-content {
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.dashboard-header > *,
+.actions-bar > *,
+.info-header > * {
+  min-width: 0;
+}
+
+.dashboard-header .detail-actions,
+.dashboard-header .form-actions,
+.actions-bar,
+.detail-actions,
+.cabra-actions {
+  flex-wrap: wrap;
+}
+
+.detail-actions .btn,
+.form-actions .btn,
+.cabra-actions .btn {
+  max-width: 100%;
+}
+
+.table-responsive,
+.production-table-wrap,
+.goat-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  max-width: 100%;
+}
+
+@media (max-width: 900px) {
+  .container {
+    padding: 16px;
+  }
+
+  .dashboard-header {
+    gap: 14px;
+  }
+
+  .dashboard-header h1 {
+    font-size: clamp(1.35rem, 4vw, 2rem);
+  }
+
+  .cabras-grid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+
+  .info-grid,
+  .goat-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 12px;
+  }
+
+  .sidebar ~ .container,
+  .sidebar ~ .main-content {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .dashboard-header {
+    align-items: stretch;
+    padding: 16px;
+    margin-bottom: 20px;
+    text-align: left;
+  }
+
+  .dashboard-header h1 {
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  .dashboard-header > .btn,
+  .dashboard-header .detail-actions,
+  .dashboard-header .detail-actions .btn,
+  .dashboard-header .form-actions,
+  .dashboard-header .form-actions .btn {
+    width: 100%;
+  }
+
+  .dashboard-header .detail-actions,
+  .dashboard-header .form-actions {
+    margin-top: 0;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-container,
+  .cabra-form,
+  .cabra-info-section {
+    padding: 16px;
+  }
+
+  .form-section,
+  .info-group {
+    padding: 14px;
+  }
+
+  .form-row,
+  .action-cards,
+  .cabras-grid,
+  .stats-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions,
+  .detail-actions,
+  .actions-bar,
+  .cabra-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .form-actions .btn,
+  .detail-actions .btn,
+  .actions-bar .btn,
+  .cabra-actions .btn {
+    width: 100%;
+  }
+
+  .search-form {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .search-form input,
+  .search-form select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .info-header,
+  .info-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .info-item strong {
+    min-width: 0;
+  }
+
+  .cabra-photo-section {
+    min-height: 220px;
+  }
+
+  .cabra-detail-image {
+    height: 260px;
+  }
+
+  .pagination {
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 380px) {
+  .container {
+    padding: 8px;
+  }
+
+  .dashboard-header,
+  .user-info,
+  .dashboard-actions {
+    padding: 12px;
+  }
+
+  .btn {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
 }
 
 body {
@@ -190,7 +423,7 @@ body {
 .dashboard-header h1 {
   color: var(--brown);
   margin: 0;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 
 .dashboard-content {
@@ -624,8 +857,8 @@ body {
 }
 
 .logo-icon {
-  width: 240px;
-  height: 240px;
+  width: 208px;
+  height: 208px;
   background: var(--light);
   border-radius: 12px;
   display: flex;
@@ -1379,6 +1612,7 @@ body {
 @media (max-width: 600px) {
   .dashboard-header .search-container {
     margin: 15px 0 !important;
+    transform: none !important;
   }
 
   .dashboard-header .search-form {
