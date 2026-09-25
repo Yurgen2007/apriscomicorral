@@ -328,11 +328,12 @@ require_once __DIR__ . '/../../../includes/functions.php';
                         </div>
                         <span class="btn btn-primary">Ver cabras</span>
                     </a>
-                    <div class="ranking-container production-ranking" style="background: linear-gradient(135deg, #f9f2e8 0%, #e9d0a8 100%); border: 1px solid #d7af72; border-radius: 18px; box-shadow: 0 10px 25px rgba(79, 50, 25, 0.10); padding: 18px 20px;">
-                        <h3 style="margin: 0 0 18px 0; text-align: center; color: #402b16; font-size: 1.5rem;">🏆 Top 3 productoras</h3>
+                    <div class="ranking-container production-ranking" style="background: linear-gradient(135deg, #fff9f1 0%, #f4debb 45%, #e8c98f 100%); border: 1px solid rgba(118, 81, 42, 0.22); border-radius: 22px; box-shadow: 0 14px 30px rgba(94, 63, 30, 0.12); padding: 22px 20px 42px; position: relative; overflow: visible;">
+                        <div style="position:absolute; inset: 0; background: radial-gradient(circle at top, rgba(255,255,255,0.65), transparent 45%); pointer-events:none;"></div>
+                        <h3 style="margin: 0 0 22px 0; text-align: center; color: #402b16; font-size: 1.5rem; letter-spacing: 0.02em; position: relative; z-index: 1;">🏆 Top 3 productoras</h3>
 
                         <?php if (!empty($topProductoras)): ?>
-                            <div style="display:flex; justify-content:center; align-items:flex-end; gap:26px; flex-wrap:wrap;">
+                            <div style="display:flex; justify-content:center; align-items:flex-end; gap:24px; flex-wrap:wrap; position: relative; z-index: 1;">
                                 <?php foreach ($topProductoras as $index => $productora): ?>
                                     <?php
                                     $medalPalette = [
@@ -354,28 +355,22 @@ require_once __DIR__ . '/../../../includes/functions.php';
                                                     style="width: 100%; height: 100%; object-fit:contain; background: #f7efe7; padding: 12px; box-sizing: border-box;">
                                             </div>
                                             <div style="position:absolute; inset: 10px 12px auto 12px; height: 28px; border-radius: 50%; background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0)); z-index:2; pointer-events:none;"></div>
-                                            <div style="position:absolute; bottom:-4px; right:18px; z-index:3; width:36px; height:36px; border-radius:50%; background: linear-gradient(135deg, #8b5e31, #d49a5d); border: 2px solid #fff; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
+                                            <div class="ranking-hover-info" style="position:absolute; left: 50%; bottom: -54px; transform: translateX(-50%); z-index:3; width: 170px; text-align:center; opacity: 1; transition: all 0.2s ease; pointer-events:none; line-height: 1.25;">
+                                                <div style="font-size: 0.72rem; font-weight: 700; color: #000000; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 2px;">
+                                                    <?php echo e($productora['nombre_cabra']); ?>
+                                                </div>
+                                                <div style="font-size: 0.72rem; font-weight: 600; color: #000000; margin-bottom: 2px;">
+                                                    <?php echo $positions[$index]; ?> · <?php echo number_format((float)$productora['total_litros'], 2, ',', '.'); ?> L
+                                                </div>
+                                                <div style="font-size: 0.72rem; font-weight: 600; color: #000000;">
+                                                    <?php echo e($productora['condicion_actual'] ?? 'Sin control'); ?>
+                                                </div>
+                                            </div>
+                                            <div style="position:absolute; bottom:-4px; right:18px; z-index:4; width:36px; height:36px; border-radius:50%; background: linear-gradient(135deg, #8b5e31, #d49a5d); border: 2px solid #fff; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:800; font-size: 0.9rem; box-shadow: 0 4px 12px rgba(0,0,0,0.12);">
                                                 <?php echo $badgeText[$index]; ?>
                                             </div>
                                         </div>
 
-                                        <div style="position:relative; width: 130px; height: 42px; margin-top: -8px; display:flex; align-items:flex-start; justify-content:center;">
-                                            <div style="position:absolute; left: 10px; right: 10px; top: 0; height: 20px; border-radius: 10px; background: linear-gradient(180deg, #e51832, #bf1025); transform: skewX(-30deg); box-shadow: 0 6px 12px rgba(123, 8, 16, 0.2);"></div>
-                                            <div style="position:absolute; left: 10px; right: 10px; top: 14px; height: 22px; border-radius: 8px; background: linear-gradient(180deg, #f11d32, #d01023); transform: skewX(-30deg); box-shadow: 0 6px 12px rgba(123, 8, 16, 0.2);"></div>
-                                            <div style="position:absolute; left: 50%; transform: translateX(-50%); top: 0; width: 12px; height: 42px; background: linear-gradient(180deg, #ff3c52, #c70d1c); border-radius: 6px; box-shadow: 0 0 0 2px rgba(255,255,255,0.15);"></div>
-                                        </div>
-
-                                        <div style="text-align:center; margin-top: 8px;">
-                                            <div style="font-size: 0.8rem; font-weight: 800; color: #6b4724; letter-spacing: 1px; margin-bottom: 4px;">
-                                                <?php echo $positions[$index]; ?>
-                                            </div>
-                                            <div style="font-size: 1.05rem; font-weight: 700; color: #2f1d0d; margin-bottom: 6px;">
-                                                <?php echo e($productora['nombre_cabra']); ?>
-                                            </div>
-                                            <div style="font-size: 0.95rem; color: #4d3015; font-weight: 700;">
-                                                <?php echo number_format((float)$productora['total_litros'], 2, ',', '.'); ?> L
-                                            </div>
-                                        </div>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
@@ -402,7 +397,6 @@ require_once __DIR__ . '/../../../includes/functions.php';
                                     <tr style="background: #e3c7a3; color: #3a2614;">
                                         <th style="padding: 16px 12px; border-bottom: 1px solid #d0ab75; font-size: 1.05rem;">ID</th>
                                         <th style="padding: 16px 12px; border-bottom: 1px solid #d0ab75; font-size: 1.05rem;">Cabra</th>
-                                        <th style="padding: 16px 12px; border-bottom: 1px solid #d0ab75; font-size: 1.05rem;">Lactancia</th>
                                         <th style="padding: 16px 12px; border-bottom: 1px solid #d0ab75; font-size: 1.05rem;">Condición sanitaria</th>
                                         <th style="padding: 16px 12px; border-bottom: 1px solid #d0ab75; font-size: 1.05rem;">Turno</th>
                                         <th style="padding: 16px 12px; border-bottom: 1px solid #d0ab75; font-size: 1.05rem;">Cantidad (L)</th>
@@ -419,9 +413,6 @@ require_once __DIR__ . '/../../../includes/functions.php';
                                                 </td>
                                                 <td>
                                                     <?php echo e($control['nombre_cabra']); ?>
-                                                </td>
-                                                <td>
-                                                    <?php echo $control['id_lactancia'] ? 'Lactancia #' . (int)($control['numero_lactancia'] ?? $control['id_lactancia']) : 'Sin vincular'; ?>
                                                 </td>
                                                 <td>
                                                     <?php echo e($control['condicion_sanitaria'] ?: 'Sin control'); ?>
@@ -448,7 +439,7 @@ require_once __DIR__ . '/../../../includes/functions.php';
                                         <?php endforeach; ?>
                                     <?php else: ?>
                                         <tr>
-                                            <td colspan="8" class="production-empty">No hay registros de producción lechera.</td>
+                                            <td colspan="7" class="production-empty">No hay registros de producción lechera.</td>
                                         </tr>
                                     <?php endif; ?>
                                 </tbody>

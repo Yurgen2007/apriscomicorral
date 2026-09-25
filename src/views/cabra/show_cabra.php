@@ -237,7 +237,7 @@ $lactancias = $lactanciaModel->getAll($cabra['id_cabra']);
                             $inicioProduccion = $lactancia['fecha_primer_registro'] ?: $lactancia['fecha_inicio'];
                             $finProduccion = $lactancia['fecha_ultimo_registro'] ?: $inicioProduccion;
                             $intervalo = (new DateTime($inicioProduccion))->diff(new DateTime($finProduccion));
-                            $duracion = $intervalo->days;
+                            $duracion = $intervalo->days + 1;
                             $mesesProduccion = ($intervalo->y * 12) + $intervalo->m;
                             ?>
                             <div class="info-item">
@@ -311,14 +311,14 @@ $lactancias = $lactanciaModel->getAll($cabra['id_cabra']);
                             <div class="info-item">
                                 <div>
                                     <strong>Fecha:</strong> <?= date('d/m/Y', strtotime($evento['fecha_evento'])) ?><br>
-                    <strong>Tipo:</strong> <?= $evento['tipo_evento'] ?><br>
-                                     <strong>Semental:</strong>
-                                     <?= !empty($evento['nombre_semental']) ? htmlspecialchars($evento['nombre_semental']) : '<span class="text-muted">No registrado</span>' ?><br>
-                                     <?= !empty($evento['nombre_pajilla']) ? '<strong>Pajilla:</strong> ' . htmlspecialchars($evento['nombre_pajilla']) . '<br>' : '' ?>
-                                     <?php if (!empty($evento['observaciones'])): ?>
-                                         <strong>Obs.:</strong> <?= htmlspecialchars($evento['observaciones']) ?><br>
-                                     <?php endif; ?>
-                                     <strong>Registrado por:</strong> <?= $evento['nombre_usuario'] ?? '-' ?>
+                                    <strong>Tipo:</strong> <?= $evento['tipo_evento'] ?><br>
+                                    <strong>Semental:</strong>
+                                    <?= !empty($evento['nombre_semental']) ? htmlspecialchars($evento['nombre_semental']) : '<span class="text-muted">No registrado</span>' ?><br>
+                                    <?= !empty($evento['nombre_pajilla']) ? '<strong>Pajilla:</strong> ' . htmlspecialchars($evento['nombre_pajilla']) . '<br>' : '' ?>
+                                    <?php if (!empty($evento['observaciones'])): ?>
+                                        <strong>Obs.:</strong> <?= htmlspecialchars($evento['observaciones']) ?><br>
+                                    <?php endif; ?>
+                                    <strong>Registrado por:</strong> <?= $evento['nombre_usuario'] ?? '-' ?>
                                 </div>
 
                                 <div style="margin-left:auto;">

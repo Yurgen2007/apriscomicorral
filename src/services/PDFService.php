@@ -38,7 +38,7 @@ class PDFService
         $this->pdf = new \FPDF();
         $this->pdf->AddPage();
         $this->pdf->SetMargins(20, 20, 20);
-        $this->pdf->SetAutoPageBreak(true, 35);
+        $this->pdf->SetAutoPageBreak(false, 25);
 
         // Fondo sutil para toda la página
         $this->pdf->SetFillColor($this->colorBeige[0], $this->colorBeige[1], $this->colorBeige[2]);
@@ -603,7 +603,9 @@ class PDFService
 
     private function verificarNuevaPagina($alturaRequerida = 30)
     {
-        if ($this->pdf->GetY() + $alturaRequerida > 250) {
+        $trigger = 260;
+
+        if ($this->pdf->GetY() + $alturaRequerida > $trigger) {
             $this->pdf->AddPage();
 
             // Aplicar fondo a la nueva página
@@ -681,18 +683,15 @@ class PDFService
             });
         }
 
-        // Obtener peso al nacer desde los controles sanitarios
+        // El peso al nacer se toma desde la cabra, que es el valor registrado en la vista de cabras
         $pesoNacimiento = 'No registrado';
 
-        foreach ($controles as $control) {
-            if (
-                isset($control['peso_nacer_kg']) &&
-                $control['peso_nacer_kg'] !== null &&
-                $control['peso_nacer_kg'] !== ''
-            ) {
-                $pesoNacimiento = $control['peso_nacer_kg'] . ' kg';
-                break;
-            }
+        if (
+            isset($cabra['peso_nacer_kg']) &&
+            $cabra['peso_nacer_kg'] !== null &&
+            $cabra['peso_nacer_kg'] !== ''
+        ) {
+            $pesoNacimiento = number_format((float) $cabra['peso_nacer_kg'], 2, '.', '') . ' kg';
         }
 
         $this->configurarPDF();
@@ -843,6 +842,9 @@ class PDFService
 
                 $this->dibujarTarjeta($contenido, $this->colorNaranja,);
 
+                // Garantizar que la tabla de detalles se mantenga junta en la misma página.
+                $this->verificarNuevaPagina(80);
+
                 // Tabla de detalles con mejor diseño
                 $this->pdf->SetFont('Arial', 'B', 10);
                 $this->pdf->SetTextColor($this->colorCafePrimario[0], $this->colorCafePrimario[1], $this->colorCafePrimario[2]);
@@ -941,14 +943,15 @@ class PDFService
 
     private function dibujarPiePagina($nombreCabra)
     {
-        $this->pdf->SetY(-40);
+        $baseY = $this->pdf->GetPageHeight() - 35;
+        $this->pdf->SetY($baseY);
 
         // Línea decorativa
         $this->pdf->SetDrawColor($this->colorDorado[0], $this->colorDorado[1], $this->colorDorado[2]);
         $this->pdf->SetLineWidth(1);
         $this->pdf->Line(20, $this->pdf->GetY(), 190, $this->pdf->GetY());
 
-        $this->pdf->Ln(5);
+        $this->pdf->Ln(4);
 
         // Información del documento
         $this->pdf->SetFont('Arial', 'B', 9);

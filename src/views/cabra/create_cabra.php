@@ -7,22 +7,24 @@ $csrf_token = $_SESSION['csrf_token'];
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrar Nueva Cabra - <?php echo SITE_NAME; ?></title>
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
 </head>
+
 <body>
-  <?php include __DIR__ . '/../../../includes/sidebar.php'; ?>
+    <?php include __DIR__ . '/../../../includes/sidebar.php'; ?>
     <div class="container">
         <header class="dashboard-header">
             <h1>🐐 Registrar Nueva Cabra</h1>
         </header>
         <header class="form-container">
-            
-            
-        
+
+
+
             <!-- Mensajes de error -->
             <?php if (isset($_SESSION['errors']) && !empty($_SESSION['errors'])): ?>
                 <div class="alert alert-error">
@@ -38,24 +40,25 @@ $csrf_token = $_SESSION['csrf_token'];
 
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert alert-error">
-                    <?php echo e($_SESSION['error']); unset($_SESSION['error']); ?>
+                    <?php echo e($_SESSION['error']);
+                    unset($_SESSION['error']); ?>
                 </div>
             <?php endif; ?>
 
             <!-- Formulario de registro -->
-            <div >
+            <div>
                 <form method="POST" action="<?php echo BASE_URL; ?>/cabras/create" enctype="multipart/form-data" class="cabra-form">
-                      <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
+                    <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                     <div class="form-sections">
                         <!-- Información Básica -->
                         <div class="form-section">
                             <h3>📋 Información Básica</h3>
-                            
+
                             <div class="form-group">
                                 <label for="nombre">Nombre de la Cabra *</label>
-                                <input type="text" id="nombre" name="nombre" required 
-                                       value="<?php echo isset($_SESSION['form_data']['nombre']) ? e($_SESSION['form_data']['nombre']) : ''; ?>"
-                                       placeholder="Ej: Esperanza, Ramón, etc.">
+                                <input type="text" id="nombre" name="nombre" required
+                                    value="<?php echo isset($_SESSION['form_data']['nombre']) ? e($_SESSION['form_data']['nombre']) : ''; ?>"
+                                    placeholder="Ej: Esperanza, Ramón, etc.">
                             </div>
 
                             <div class="form-row">
@@ -75,39 +78,46 @@ $csrf_token = $_SESSION['csrf_token'];
                                 <div class="form-group">
                                     <label for="fecha_nacimiento">Fecha de Nacimiento</label>
                                     <input type="date" id="fecha_nacimiento" name="fecha_nacimiento"
-                                           value="<?php echo isset($_SESSION['form_data']['fecha_nacimiento']) ? e($_SESSION['form_data']['fecha_nacimiento']) : ''; ?>">
+                                        value="<?php echo isset($_SESSION['form_data']['fecha_nacimiento']) ? e($_SESSION['form_data']['fecha_nacimiento']) : ''; ?>">
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="color">Color</label>
-                                    <input type="text" id="color" name="color" 
-                                           value="<?php echo isset($_SESSION['form_data']['color']) ? e($_SESSION['form_data']['color']) : ''; ?>"
-                                           placeholder="Ej: Blanco, Negro, Marrón, etc.">
+                                    <label for="peso_nacer_kg">Peso al nacer (kg)</label>
+                                    <input type="number" id="peso_nacer_kg" name="peso_nacer_kg" step="0.01" min="0" max="50"
+                                        value="<?php echo isset($_SESSION['form_data']['peso_nacer_kg']) ? e($_SESSION['form_data']['peso_nacer_kg']) : ''; ?>"
+                                        placeholder="Ej: 3.20">
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="id_raza">Raza</label>
-                                    <select id="id_raza" name="id_raza">
-                                        <option value="">Seleccionar raza</option>
-                                        <?php if (!empty($breeds)): ?>
-                                            <?php foreach ($breeds as $breed): ?>
-                                                <option value="<?php echo $breed['id_raza']; ?>"
-                                                    <?php echo (isset($_SESSION['form_data']['id_raza']) && $_SESSION['form_data']['id_raza'] == $breed['id_raza']) ? 'selected' : ''; ?>>
-                                                    <?php echo e($breed['nombre']); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </select>
+                                    <label for="color">Color</label>
+                                    <input type="text" id="color" name="color"
+                                        value="<?php echo isset($_SESSION['form_data']['color']) ? e($_SESSION['form_data']['color']) : ''; ?>"
+                                        placeholder="Ej: Blanco, Negro, Marrón, etc.">
                                 </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="id_raza">Raza</label>
+                                <select id="id_raza" name="id_raza">
+                                    <option value="">Seleccionar raza</option>
+                                    <?php if (!empty($breeds)): ?>
+                                        <?php foreach ($breeds as $breed): ?>
+                                            <option value="<?php echo $breed['id_raza']; ?>"
+                                                <?php echo (isset($_SESSION['form_data']['id_raza']) && $_SESSION['form_data']['id_raza'] == $breed['id_raza']) ? 'selected' : ''; ?>>
+                                                <?php echo e($breed['nombre']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
                             </div>
                         </div>
 
                         <!-- Información de Parentesco -->
                         <div class="form-section">
                             <h3>👨‍👩‍👧‍👦 Información de Parentesco</h3>
-                            
+
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="madre">Madre</label>
@@ -144,7 +154,7 @@ $csrf_token = $_SESSION['csrf_token'];
                         <!-- Información de Propiedad -->
                         <div class="form-section">
                             <h3>👤 Información de Propiedad</h3>
-                            
+
                             <div class="form-group">
                                 <label for="id_propietario_actual">Propietario Actual</label>
                                 <select id="id_propietario_actual" name="id_propietario_actual">
@@ -164,7 +174,7 @@ $csrf_token = $_SESSION['csrf_token'];
                         <!-- Foto -->
                         <div class="form-section">
                             <h3>📷 Fotografía</h3>
-                            
+
                             <div class="form-group">
                                 <label for="foto">Foto de la Cabra</label>
                                 <input type="file" id="foto" name="foto" accept="image/*">
@@ -190,7 +200,7 @@ $csrf_token = $_SESSION['csrf_token'];
                     </div>
                 </form>
             </div>
-        </main>
+            </main>
     </div>
 
     <script>
@@ -233,11 +243,12 @@ $csrf_token = $_SESSION['csrf_token'];
 
     </style>
 
-    <?php 
+    <?php
     // Limpiar datos del formulario de la sesión
     if (isset($_SESSION['form_data'])) {
         unset($_SESSION['form_data']);
     }
     ?>
 </body>
+
 </html>

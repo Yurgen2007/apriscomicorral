@@ -144,7 +144,14 @@ class ControlProduccionLechera
     {
         $stmt = $this->conn->query(
             "SELECT c.id_cabra, c.nombre AS nombre_cabra, c.foto,
-                    SUM(cpl.cantidad_litros) AS total_litros
+                    SUM(cpl.cantidad_litros) AS total_litros,
+                    COALESCE((
+                        SELECT cs.condicion_especial
+                        FROM controles_sanitarios cs
+                        WHERE cs.id_cabra = c.id_cabra
+                        ORDER BY cs.fecha_control DESC, cs.id_control DESC
+                        LIMIT 1
+                    ), 'SIN CONTROL') AS condicion_actual
              FROM {$this->table} cpl
              INNER JOIN cabras c ON c.id_cabra = cpl.id_cabra
              GROUP BY c.id_cabra, c.nombre, c.foto
@@ -302,24 +309,64 @@ class ControlProduccionLechera
 
     public function update($id, $idCabra, $idLactancia, $fechaRegistro, $turno, $cantidad)
     {
+        if ($idLactancia > 0) {
+            $stmt = $this->conn->prepare(
+                "UPDATE {$this->table} cpl
+                 INNER JOIN lactancias l ON l.id_lactancia = :id_lactancia
+                 SET cpl.id_cabra = :id_cabra, cpl.id_lactancia = l.id_lactancia,
+                     cpl.fecha_registro = :fecha_registro, cpl.turno_ordeño = :turno,
+                     cpl.cantidad_litros = :cantidad
+                 WHERE cpl.id_control_produccion = :id AND l.id_cabra = :id_cabra_2
+                   AND l.estado = 'EN LACTANCIA'
+                   AND :fecha_validacion >= l.fecha_inicio
+                   AND (l.fecha_fin IS NULL OR :fecha_validacion_2 <= l.fecha_fin)"
+            );
+            return $stmt->execute([
+                ':id' => (int)$id,
+                ':id_cabra' => (int)$idCabra,
+                ':id_lactancia' => (int)$idLactancia,
+                ':fecha_registro' => $fechaRegistro,
+                ':turno' => $turno,
+                ':cantidad' => $cantidad,
+                ':id_cabra_2' => (int)$idCabra,
+                ':fecha_validacion' => $fechaRegistro,
+                ':fecha_validacion_2' => $fechaRegistro
+            ]);
+        }
+
         $stmt = $this->conn->prepare(
-            "UPDATE {$this->table} cpl
-             INNER JOIN lactancias l ON l.id_lactancia = :id_lactancia
-             SET cpl.id_cabra = :id_cabra, cpl.id_lactancia = l.id_lactancia,
-                 cpl.fecha_registro = :fecha_registro, cpl.turno_ordeño = :turno,
-                 cpl.cantidad_litros = :cantidad
-             WHERE cpl.id_control_produccion = :id AND l.id_cabra = :id_cabra_2
-               AND l.estado = 'EN LACTANCIA'
-               AND :fecha_validacion >= l.fecha_inicio
-               AND (l.fecha_fin IS NULL OR :fecha_validacion_2 <= l.fecha_fin)"
+            "UPDATE {$this->table}
+             SET id_cabra = :id_cabra, id_lactancia = NULL,
+                 fecha_registro = :fecha_registro, turno_ordeño = :turno,
+                 cantidad_litros = :cantidad
+             WHERE id_control_produccion = :id"
         );
         return $stmt->execute([
-            ':id' => (int)$id, ':id_cabra' => (int)$idCabra,
-            ':id_lactancia' => (int)$idLactancia, ':fecha_registro' => $fechaRegistro,
-            ':turno' => $turno, ':cantidad' => $cantidad,
-            ':id_cabra_2' => (int)$idCabra, ':fecha_validacion' => $fechaRegistro,
-            ':fecha_validacion_2' => $fechaRegistro
+            ':id' => (int)$id,
+            ':id_cabra' => (int)$idCabra,
+            ':fecha_registro' => $fechaRegistro,
+            ':turno' => $turno,
+            ':cantidad' => $cantidad
         ]);
+    }
+
+    public function getPaginatedByCabra($idCabra, $limit, $offset)
+    {
+        $stmt = $this->conn->prepare(
+            $this->selectSql() . ' WHERE cpl.id_cabra = :id_cabra ORDER BY cpl.fecha_registro DESC LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':id_cabra', (int)$idCabra, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', (int)$limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function countByCabra($idCabra)
+    {
+        $stmt = $this->conn->prepare("SELECT COUNT(*) FROM {$this->table} WHERE id_cabra = :id_cabra");
+        $stmt->execute([':id_cabra' => (int)$idCabra]);
+        return (int)$stmt->fetchColumn();
     }
 
     public function delete($id)

@@ -207,7 +207,9 @@ class ControlProduccionLecheraController
         $id_lactancia = $this->service->getOrCreateActiveLactancia((int)$id_cabra, $fecha_registro);
 
         $resultado = $this->service->create(
-            (int)$id_cabra, (int)$id_lactancia, $fecha_registro,
+            (int)$id_cabra,
+            (int)$id_lactancia,
+            $fecha_registro,
             $turno_ordeño,
             (float)$cantidad_litros
         );
@@ -256,6 +258,13 @@ class ControlProduccionLecheraController
             exit;
         }
 
+        $existingControl = $this->service->getById($id);
+        if (!$existingControl) {
+            $_SESSION['error'] = 'El control de producción no existe.';
+            header('Location: ' . BASE_URL . '/control-produccion-lechera');
+            exit;
+        }
+
         $id_cabra = $_POST['id_cabra'] ?? '';
         $fecha_registro = trim($_POST['fecha_registro'] ?? '');
         $turno_ordeño = $_POST['turno_ordeño'] ?? '';
@@ -289,10 +298,12 @@ class ControlProduccionLecheraController
             exit;
         }
 
-        $id_lactancia = (int)$control['id_lactancia'];
+        $id_lactancia = !empty($existingControl['id_lactancia']) ? (int)$existingControl['id_lactancia'] : 0;
         $resultado = $this->service->update(
             (int)$id,
-            (int)$id_cabra, (int)$id_lactancia, $fecha_registro,
+            (int)$id_cabra,
+            $id_lactancia,
+            $fecha_registro,
             $turno_ordeño,
             (float)$cantidad_litros
         );
@@ -339,5 +350,4 @@ class ControlProduccionLecheraController
         $parsed = DateTime::createFromFormat('Y-m-d', $date);
         return $parsed && $parsed->format('Y-m-d') === $date;
     }
-
 }

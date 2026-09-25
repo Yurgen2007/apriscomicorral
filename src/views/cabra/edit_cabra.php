@@ -4,15 +4,25 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 $csrf_token = $_SESSION['csrf_token'];
+
+$cabra = $cabra ?? [];
+$cabra['id_cabra'] = $cabra['id_cabra'] ?? 0;
+$cabra['nombre'] = $cabra['nombre'] ?? '';
+$cabra['sexo'] = $cabra['sexo'] ?? '';
+$cabra['fecha_nacimiento'] = $cabra['fecha_nacimiento'] ?? '';
+$cabra['color'] = $cabra['color'] ?? '';
+$cabra['estado'] = $cabra['estado'] ?? 'ACTIVA';
 ?>
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Editar <?php echo e($cabra['nombre']); ?> - <?php echo SITE_NAME; ?></title>
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
 </head>
+
 <body>
     <div class="container">
         <?php include __DIR__ . '/../../../includes/sidebar.php'; ?>
@@ -36,13 +46,15 @@ $csrf_token = $_SESSION['csrf_token'];
 
             <?php if (isset($_SESSION['error'])): ?>
                 <div class="alert alert-error">
-                    <?php echo e($_SESSION['error']); unset($_SESSION['error']); ?>
+                    <?php echo e($_SESSION['error']);
+                    unset($_SESSION['error']); ?>
                 </div>
             <?php endif; ?>
-            
+
             <?php if (isset($_SESSION['success'])): ?>
                 <div class="alert alert-success">
-                    <?php echo e($_SESSION['success']); unset($_SESSION['success']); ?>
+                    <?php echo e($_SESSION['success']);
+                    unset($_SESSION['success']); ?>
                 </div>
             <?php endif; ?>
 
@@ -50,16 +62,16 @@ $csrf_token = $_SESSION['csrf_token'];
             <div class="form-container">
                 <form action="<?php echo BASE_URL; ?>/cabras/<?php echo $cabra['id_cabra']; ?>/edit" method="POST" enctype="multipart/form-data" class="cabra-form">
                     <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
-                    
+
                     <div class="form-sections">
                         <!-- Información Básica -->
                         <div class="form-section">
                             <h3>📋 Información Básica</h3>
-                            
+
                             <div class="form-group">
                                 <label for="nombre">Nombre de la Cabra *</label>
-                                <input type="text" id="nombre" name="nombre" value="<?php echo e($cabra['nombre']); ?>" required
-                                       placeholder="Ej: Esperanza, Ramón, etc.">
+                                <input type="text" id="nombre" name="nombre" value="<?php echo e($_SESSION['form_data']['nombre'] ?? $cabra['nombre']); ?>" required
+                                    placeholder="Ej: Esperanza, Ramón, etc.">
                             </div>
 
                             <div class="form-row">
@@ -78,32 +90,39 @@ $csrf_token = $_SESSION['csrf_token'];
 
                                 <div class="form-group">
                                     <label for="fecha_nacimiento">Fecha de Nacimiento</label>
-                                    <input type="date" id="fecha_nacimiento" name="fecha_nacimiento" 
-                                           value="<?php echo e($cabra['fecha_nacimiento']); ?>">
+                                    <input type="date" id="fecha_nacimiento" name="fecha_nacimiento"
+                                        value="<?php echo e($_SESSION['form_data']['fecha_nacimiento'] ?? $cabra['fecha_nacimiento']); ?>">
                                 </div>
                             </div>
 
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="color">Color</label>
-                                    <input type="text" id="color" name="color" value="<?php echo e($cabra['color']); ?>"
-                                           placeholder="Ej: Blanco, Negro, Marrón, etc.">
+                                    <label for="peso_nacer_kg">Peso al nacer (kg)</label>
+                                    <input type="number" id="peso_nacer_kg" name="peso_nacer_kg" step="0.01" min="0" max="50"
+                                        value="<?php echo e($_SESSION['form_data']['peso_nacer_kg'] ?? $cabra['peso_nacer_kg'] ?? ''); ?>"
+                                        placeholder="Ej: 3.20">
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="id_raza">Raza</label>
-                                    <select id="id_raza" name="id_raza">
-                                        <option value="">Seleccionar raza</option>
-                                        <?php if (!empty($breeds)): ?>
-                                            <?php foreach ($breeds as $breed): ?>
-                                                <option value="<?php echo $breed['id_raza']; ?>"
-                                                    <?php echo (isset($cabra['id_raza']) && $cabra['id_raza'] == $breed['id_raza']) ? 'selected' : ''; ?>>
-                                                    <?php echo e($breed['nombre']); ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        <?php endif; ?>
-                                    </select>
+                                    <label for="color">Color</label>
+                                    <input type="text" id="color" name="color" value="<?php echo e($_SESSION['form_data']['color'] ?? $cabra['color']); ?>"
+                                        placeholder="Ej: Blanco, Negro, Marrón, etc.">
                                 </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="id_raza">Raza</label>
+                                <select id="id_raza" name="id_raza">
+                                    <option value="">Seleccionar raza</option>
+                                    <?php if (!empty($breeds)): ?>
+                                        <?php foreach ($breeds as $breed): ?>
+                                            <option value="<?php echo $breed['id_raza']; ?>"
+                                                <?php echo (isset($cabra['id_raza']) && $cabra['id_raza'] == $breed['id_raza']) ? 'selected' : ''; ?>>
+                                                <?php echo e($breed['nombre']); ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
                             </div>
 
                             <div class="form-group">
@@ -122,7 +141,7 @@ $csrf_token = $_SESSION['csrf_token'];
                         <!-- Información de Parentesco -->
                         <div class="form-section">
                             <h3>👨‍👩‍👧‍👦 Información de Parentesco</h3>
-                            
+
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="madre">Madre</label>
@@ -159,7 +178,7 @@ $csrf_token = $_SESSION['csrf_token'];
                         <!-- Información de Propiedad -->
                         <div class="form-section">
                             <h3>👤 Información de Propiedad</h3>
-                            
+
                             <div class="form-group">
                                 <label for="id_propietario_actual">Propietario Actual</label>
                                 <select id="id_propietario_actual" name="id_propietario_actual">
@@ -179,16 +198,16 @@ $csrf_token = $_SESSION['csrf_token'];
                         <!-- Fotografía -->
                         <div class="form-section">
                             <h3>📷 Fotografía</h3>
-                            
+
                             <?php if (!empty($cabra['foto'])): ?>
                                 <div class="current-photo">
                                     <label>Foto Actual:</label>
-                                    <img src="<?php echo BASE_URL; ?>/uploads/<?php echo e($cabra['foto']); ?>" 
-                                         alt="Foto actual de <?php echo e($cabra['nombre']); ?>" 
-                                         style="max-width: 200px; max-height: 200px; border-radius: 8px; display: block; margin: 10px 0;">
+                                    <img src="<?php echo BASE_URL; ?>/uploads/<?php echo e($cabra['foto']); ?>"
+                                        alt="Foto actual de <?php echo e($cabra['nombre']); ?>"
+                                        style="max-width: 200px; max-height: 200px; border-radius: 8px; display: block; margin: 10px 0;">
                                 </div>
                             <?php endif; ?>
-                            
+
                             <div class="form-group">
                                 <label for="foto">Cambiar Foto</label>
                                 <input type="file" id="foto" name="foto" accept="image/*">
@@ -221,74 +240,88 @@ $csrf_token = $_SESSION['csrf_token'];
     </div>
 
     <script>
-        // Vista previa de la imagen
-        document.getElementById('foto').addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    document.getElementById('photo-preview').src = e.target.result;
-                    document.getElementById('preview-container').style.display = 'block';
-                };
-                reader.readAsDataURL(file);
-            } else {
-                document.getElementById('preview-container').style.display = 'none';
-            }
-        });
+        const fotoInput = document.getElementById('foto');
+        const photoPreview = document.getElementById('photo-preview');
+        const previewContainer = document.getElementById('preview-container');
+        const cabraForm = document.querySelector('.cabra-form');
+        const estadoSelect = document.getElementById('estado');
+        const madreSelect = document.getElementById('madre');
+        const padreSelect = document.getElementById('padre');
 
-        // Validación del formulario
-        document.querySelector('.cabra-form').addEventListener('submit', function(e) {
-            const nombre = document.getElementById('nombre').value.trim();
-            const sexo = document.getElementById('sexo').value;
-            const estado = document.getElementById('estado').value;
-
-            if (!nombre) {
-                alert('El nombre de la cabra es obligatorio');
-                e.preventDefault();
-                return;
-            }
-
-            if (!sexo) {
-                alert('Debe seleccionar el sexo de la cabra');
-                e.preventDefault();
-                return;
-            }
-
-            if (!estado) {
-                alert('Debe seleccionar el estado de la cabra');
-                e.preventDefault();
-                return;
-            }
-        });
-
-        // Mostrar confirmación para cambios críticos
-        document.getElementById('estado').addEventListener('change', function(e) {
-            if (e.target.value === 'INACTIVA') {
-                const confirm = window.confirm('¿Está seguro de marcar esta cabra como inactiva? Esta acción es importante para los registros.');
-                if (!confirm) {
-                    e.target.value = 'ACTIVA';
+        if (fotoInput) {
+            fotoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file && photoPreview && previewContainer) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        photoPreview.src = event.target.result;
+                        previewContainer.style.display = 'block';
+                    };
+                    reader.readAsDataURL(file);
+                } else if (previewContainer) {
+                    previewContainer.style.display = 'none';
                 }
-            }
-        });
+            });
+        }
 
-        // Validación de parentesco (evitar que se seleccione a sí mismo)
-        const cabraId = <?php echo $cabra['id_cabra']; ?>;
-        
-        document.getElementById('madre').addEventListener('change', function(e) {
-            if (parseInt(e.target.value) === cabraId) {
-                alert('Una cabra no puede ser su propia madre');
-                e.target.value = '';
-            }
-        });
+        if (cabraForm) {
+            cabraForm.addEventListener('submit', function(e) {
+                const nombre = document.getElementById('nombre')?.value?.trim();
+                const sexo = document.getElementById('sexo')?.value;
+                const estado = document.getElementById('estado')?.value;
 
-        document.getElementById('padre').addEventListener('change', function(e) {
-            if (parseInt(e.target.value) === cabraId) {
-                alert('Una cabra no puede ser su propio padre');
-                e.target.value = '';
-            }
-        });
+                if (!nombre) {
+                    alert('El nombre de la cabra es obligatorio');
+                    e.preventDefault();
+                    return;
+                }
+
+                if (!sexo) {
+                    alert('Debe seleccionar el sexo de la cabra');
+                    e.preventDefault();
+                    return;
+                }
+
+                if (!estado) {
+                    alert('Debe seleccionar el estado de la cabra');
+                    e.preventDefault();
+                }
+            });
+        }
+
+        if (estadoSelect) {
+            estadoSelect.addEventListener('change', function(e) {
+                if (e.target.value === 'INACTIVA') {
+                    const confirm = window.confirm('¿Está seguro de marcar esta cabra como inactiva? Esta acción es importante para los registros.');
+                    if (!confirm) {
+                        e.target.value = 'ACTIVA';
+                    }
+                }
+            });
+        }
+
+        const cabraId = <?php echo (int)($cabra['id_cabra'] ?? 0); ?>;
+
+        if (madreSelect) {
+            madreSelect.addEventListener('change', function(e) {
+                if (parseInt(e.target.value) === cabraId) {
+                    alert('Una cabra no puede ser su propia madre');
+                    e.target.value = '';
+                }
+            });
+        }
+
+        if (padreSelect) {
+            padreSelect.addEventListener('change', function(e) {
+                if (parseInt(e.target.value) === cabraId) {
+                    alert('Una cabra no puede ser su propio padre');
+                    e.target.value = '';
+                }
+            });
+        }
     </script>
 
 
 </body>
+
 </html>

@@ -181,6 +181,7 @@ class CabraController
             'madre' => !empty($_POST['madre']) ? $_POST['madre'] : null,
             'padre' => !empty($_POST['padre']) ? $_POST['padre'] : null,
             'fecha_nacimiento' => $_POST['fecha_nacimiento'],
+            'peso_nacer_kg' => isset($_POST['peso_nacer_kg']) && $_POST['peso_nacer_kg'] !== '' ? (float)$_POST['peso_nacer_kg'] : null,
             'sexo' => $_POST['sexo'],
             'id_raza' => !empty($_POST['id_raza']) ? $_POST['id_raza'] : null,
             'color' => trim($_POST['color']),
@@ -353,6 +354,7 @@ class CabraController
             'madre' => !empty($_POST['madre']) ? $_POST['madre'] : null,
             'padre' => !empty($_POST['padre']) ? $_POST['padre'] : null,
             'fecha_nacimiento' => $_POST['fecha_nacimiento'],
+            'peso_nacer_kg' => isset($_POST['peso_nacer_kg']) && $_POST['peso_nacer_kg'] !== '' ? (float)$_POST['peso_nacer_kg'] : null,
             'sexo' => $_POST['sexo'],
             'id_raza' => !empty($_POST['id_raza']) ? $_POST['id_raza'] : null,
             'color' => trim($_POST['color']),
@@ -518,6 +520,13 @@ class CabraController
             $errors[] = 'El color debe tener al menos 3 caracteres.';
         }
 
+        if (isset($data['peso_nacer_kg']) && $data['peso_nacer_kg'] !== '' && $data['peso_nacer_kg'] !== null) {
+            $pesoNacimiento = (float) $data['peso_nacer_kg'];
+            if ($pesoNacimiento < 0 || $pesoNacimiento > 50) {
+                $errors[] = 'El peso al nacer debe estar entre 0 y 50 kg.';
+            }
+        }
+
         if (!empty($data['id_raza']) && !is_numeric($data['id_raza'])) {
             $errors[] = 'La raza seleccionada no es válida.';
         }
@@ -562,37 +571,37 @@ class CabraController
                 }
             }
             // Validación de consanguinidad: evitar que madre y padre estén relacionados por descendencia
-        if ($madreId && $padreId) {
-            $ancestrosMadre = $this->cabra->getAncestors($madreId);
-            $ancestrosPadre = $this->cabra->getAncestors($padreId);
-            if (in_array($padreId, $ancestrosMadre)) {
-                $errors[] = 'No se puede seleccionar como padre a un hijo de la madre (relación consanguínea).';
-            }
-            if (in_array($madreId, $ancestrosPadre)) {
-                $errors[] = 'No se puede seleccionar como madre a una hija del padre (relación consanguínea).';
-            }
+            if ($madreId && $padreId) {
+                $ancestrosMadre = $this->cabra->getAncestors($madreId);
+                $ancestrosPadre = $this->cabra->getAncestors($padreId);
+                if (in_array($padreId, $ancestrosMadre)) {
+                    $errors[] = 'No se puede seleccionar como padre a un hijo de la madre (relación consanguínea).';
+                }
+                if (in_array($madreId, $ancestrosPadre)) {
+                    $errors[] = 'No se puede seleccionar como madre a una hija del padre (relación consanguínea).';
+                }
 
-            $madreData = $this->cabra->getById($madreId);
-            $padreData = $this->cabra->getById($padreId);
+                $madreData = $this->cabra->getById($madreId);
+                $padreData = $this->cabra->getById($padreId);
 
-            if (
-                ($madreData['madre'] && $madreData['madre'] === $padreData['madre']) ||
-                ($madreData['padre'] && $madreData['padre'] === $padreData['padre'])
-            ) {
-                $errors[] = 'La madre y el padre no pueden ser hermanos (comparten al menos uno de los padres).';
-            }
+                if (
+                    ($madreData['madre'] && $madreData['madre'] === $padreData['madre']) ||
+                    ($madreData['padre'] && $madreData['padre'] === $padreData['padre'])
+                ) {
+                    $errors[] = 'La madre y el padre no pueden ser hermanos (comparten al menos uno de los padres).';
+                }
 
-            // Validar que madre no sea sobrina del padre o viceversa (tío ↔ sobrina)
-            $padreAncestros = $this->cabra->getAncestors($padreId);
-            if (in_array($madreData['madre'], $padreAncestros) || in_array($madreData['padre'], $padreAncestros)) {
-                $errors[] = 'La madre no puede ser sobrina del padre.';
-            }
+                // Validar que madre no sea sobrina del padre o viceversa (tío ↔ sobrina)
+                $padreAncestros = $this->cabra->getAncestors($padreId);
+                if (in_array($madreData['madre'], $padreAncestros) || in_array($madreData['padre'], $padreAncestros)) {
+                    $errors[] = 'La madre no puede ser sobrina del padre.';
+                }
 
-            $madreAncestros = $this->cabra->getAncestors($madreId);
-            if (in_array($padreData['madre'], $madreAncestros) || in_array($padreData['padre'], $madreAncestros)) {
-                $errors[] = 'El padre no puede ser sobrino de la madre.';
+                $madreAncestros = $this->cabra->getAncestors($madreId);
+                if (in_array($padreData['madre'], $madreAncestros) || in_array($padreData['padre'], $madreAncestros)) {
+                    $errors[] = 'El padre no puede ser sobrino de la madre.';
+                }
             }
-        }
         }
 
         return $errors;

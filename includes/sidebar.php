@@ -696,20 +696,18 @@
             closeSidebar();
         });
 
-        // Manejar submenús
+        // Manejar submenús en móvil sin bloquear la navegación del módulo principal.
         submenuToggles.forEach(function(toggle) {
             toggle.addEventListener('click', function(e) {
-                if (window.innerWidth <= 768) {
+                const parent = this.parentElement;
+                const submenu = parent ? parent.querySelector('.submenu') : null;
+                const clickedOnArrow = e.target && e.target.closest('.nav-arrow');
+
+                if (window.innerWidth <= 768 && submenu && clickedOnArrow) {
                     e.preventDefault();
                     e.stopPropagation();
-
-                    const parent = this.parentElement;
-                    const submenu = parent.querySelector('.submenu');
-
-                    if (submenu) {
-                        parent.classList.toggle('expanded');
-                        submenu.classList.toggle('active');
-                    }
+                    parent.classList.toggle('expanded');
+                    submenu.classList.toggle('active');
                 }
             });
         });

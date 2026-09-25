@@ -44,43 +44,45 @@ $csrf_token = $_SESSION['csrf_token'];
                 <h3>📋 Listado de Canastillas</h3>
 
                 <?php if (!empty($canastillas)): ?>
-                    <table class="cabras-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nombre</th>
-                                <th>Descripción</th>
-                                <th>Fecha de Registro</th>
-                                <th>Pajillas</th>
-                                <th>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($canastillas as $canastilla): ?>
+                    <div class="table-responsive">
+                        <table class="cabras-table">
+                            <thead>
                                 <tr>
-                                    <td><?php echo e($canastilla['id_canastilla']); ?></td>
-                                    <td><strong><?php echo e($canastilla['nombre']); ?></strong></td>
-                                    <td><?php echo e($canastilla['descripcion'] ?: '-'); ?></td>
-                                    <td><?php echo date('d/m/Y', strtotime($canastilla['fecha_registro'])); ?></td>
-                                    <td><?php echo e($canastilla['pajilla_count'] ?? 0); ?></td>
-                                    <td class="cabra-actions">
-                                        <a href="<?php echo BASE_URL; ?>/canastillas/<?php echo $canastilla['id_canastilla']; ?>" class="btn btn-sm btn-info">
-                                            <i class="fas fa-eye"></i> Ver
-                                        </a>
-                                        <a href="<?php echo BASE_URL; ?>/canastillas/<?php echo $canastilla['id_canastilla']; ?>/edit" class="btn btn-sm btn-warning">
-                                            <i class="fas fa-edit"></i> Editar
-                                        </a>
-                                        <form method="POST" action="<?php echo BASE_URL; ?>/canastillas/<?php echo $canastilla['id_canastilla']; ?>/delete" style="display:inline-block;" onsubmit="return confirm('¿Estás seguro de eliminar esta canastilla?')">
-                                            <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
-                                            <button type="submit" class="btn btn-sm btn-danger">
-                                                <i class="fas fa-trash"></i> Eliminar
-                                            </button>
-                                        </form>
-                                    </td>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Descripción</th>
+                                    <th>Fecha de Registro</th>
+                                    <th>Pajillas</th>
+                                    <th>Acciones</th>
                                 </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($canastillas as $canastilla): ?>
+                                    <tr>
+                                        <td><?php echo e($canastilla['id_canastilla']); ?></td>
+                                        <td><strong><?php echo e($canastilla['nombre']); ?></strong></td>
+                                        <td><?php echo e($canastilla['descripcion'] ?: '-'); ?></td>
+                                        <td><?php echo date('d/m/Y', strtotime($canastilla['fecha_registro'])); ?></td>
+                                        <td><?php echo e($canastilla['pajilla_count'] ?? 0); ?></td>
+                                        <td class="cabra-actions">
+                                            <a href="<?php echo BASE_URL; ?>/canastillas/<?php echo $canastilla['id_canastilla']; ?>" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i> Ver
+                                            </a>
+                                            <a href="<?php echo BASE_URL; ?>/canastillas/<?php echo $canastilla['id_canastilla']; ?>/edit" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-edit"></i> Editar
+                                            </a>
+                                            <form method="POST" action="<?php echo BASE_URL; ?>/canastillas/<?php echo $canastilla['id_canastilla']; ?>/delete" style="display:inline-block;" onsubmit="return confirm('¿Estás seguro de eliminar esta canastilla?')">
+                                                <input type="hidden" name="csrf_token" value="<?php echo generateCSRFToken(); ?>">
+                                                <button type="submit" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash"></i> Eliminar
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
                 <?php else: ?>
                     <div class="empty-state">
                         <p>No hay canastillas registradas.</p>
@@ -97,14 +99,21 @@ $csrf_token = $_SESSION['csrf_token'];
 </html>
 
 <style>
+    .table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 20px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
     .cabras-table {
         width: 100%;
+        min-width: 720px;
         border-collapse: collapse;
-        margin: 20px 0;
         background: var(--white);
-        border-radius: 8px;
         overflow: hidden;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
     .cabras-table thead th {
@@ -113,15 +122,24 @@ $csrf_token = $_SESSION['csrf_token'];
         padding: 12px 15px;
         text-align: left;
         font-weight: 600;
+        white-space: nowrap;
     }
 
     .cabras-table tbody td {
         padding: 10px 15px;
         border-bottom: 1px solid var(--light);
+        white-space: nowrap;
     }
 
     .cabras-table tbody tr:hover {
         background: var(--cream);
+    }
+
+    .cabra-actions {
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+        align-items: center;
     }
 
     .cabra-actions .btn-sm {
@@ -135,5 +153,18 @@ $csrf_token = $_SESSION['csrf_token'];
         background: var(--white);
         border-radius: 8px;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .cabra-actions {
+            flex-direction: column;
+            align-items: stretch;
+            min-width: 110px;
+        }
+
+        .cabra-actions .btn {
+            width: 100%;
+            justify-content: center;
+        }
     }
 </style>

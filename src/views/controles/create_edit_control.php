@@ -3,6 +3,15 @@ if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 $csrf_token = $_SESSION['csrf_token'];
+
+$control = $control ?? [];
+$id_cabra = $id_cabra ?? ($_POST['id_cabra'] ?? 0);
+$control['id_control'] = $control['id_control'] ?? 0;
+$control['fecha_control'] = $control['fecha_control'] ?? '';
+$control['peso_kg'] = $control['peso_kg'] ?? '';
+$control['observaciones'] = $control['observaciones'] ?? '';
+$control['vitaminacion'] = $control['vitaminacion'] ?? '';
+$control['purga'] = $control['purga'] ?? '';
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -43,17 +52,12 @@ $csrf_token = $_SESSION['csrf_token'];
 
                     <div class="form-group">
                         <label for="fecha_control">Fecha *</label>
-                        <input type="date" name="fecha_control" required value="<?php echo $control['fecha_control'] ?? ''; ?>">
+                        <input type="date" name="fecha_control" required value="<?php echo e($_SESSION['form_data']['fecha_control'] ?? $control['fecha_control']); ?>">
                     </div>
 
                     <div class="form-group">
                         <label for="peso_kg">Peso (kg)</label>
-                        <input type="number" step="0.01" name="peso_kg" value="<?php echo $control['peso_kg'] ?? ''; ?>">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="peso_nacer_kg">Peso al nacer (kg)</label>
-                        <input type="number" step="0.01" name="peso_nacer_kg" value="<?php echo $control['peso_nacer_kg'] ?? ''; ?>">
+                        <input type="number" step="0.01" name="peso_kg" value="<?php echo e($_SESSION['form_data']['peso_kg'] ?? $control['peso_kg']); ?>">
                     </div>
 
                     <div class="form-group">
@@ -70,12 +74,12 @@ $csrf_token = $_SESSION['csrf_token'];
 
                     <div class="form-group">
                         <label for="vitaminacion">Vitaminación</label>
-                        <input type="text" name="vitaminacion" value="<?php echo $control['vitaminacion'] ?? ''; ?>">
+                        <input type="text" name="vitaminacion" value="<?php echo e($_SESSION['form_data']['vitaminacion'] ?? $control['vitaminacion']); ?>">
                     </div>
 
                     <div class="form-group">
                         <label for="purga">Purga</label>
-                        <input type="text" name="purga" value="<?php echo $control['purga'] ?? ''; ?>">
+                        <input type="text" name="purga" value="<?php echo e($_SESSION['form_data']['purga'] ?? $control['purga']); ?>">
                     </div>
                 </div>
 
@@ -224,7 +228,7 @@ $csrf_token = $_SESSION['csrf_token'];
 
                 <div class="form-group">
                     <label for="observaciones">Observaciones</label>
-                    <textarea name="observaciones" rows="3"><?php echo $control['observaciones'] ?? ''; ?></textarea>
+                    <textarea name="observaciones" rows="3"><?php echo e($_SESSION['form_data']['observaciones'] ?? $control['observaciones']); ?></textarea>
                 </div>
 
                 <div class="form-actions">
