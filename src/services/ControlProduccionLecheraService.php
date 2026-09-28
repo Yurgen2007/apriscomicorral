@@ -134,16 +134,6 @@ class ControlProduccionLecheraService
         return $this->lactanciaModel->getOptionsByCabra($idCabra);
     }
 
-    public function getPartosWithoutLactancia($idCabra = null)
-    {
-        return $this->lactanciaModel->getPartosWithoutLactancia($idCabra);
-    }
-
-    public function createLactancia($idCabra, $idParto)
-    {
-        return $this->lactanciaModel->create($idCabra, $idParto);
-    }
-
     public function finishLactancia($id, $fechaFin)
     {
         return $this->lactanciaModel->finish($id, $fechaFin);

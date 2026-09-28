@@ -243,7 +243,7 @@ $lactancias = $lactanciaModel->getAll($cabra['id_cabra']);
                             <div class="info-item">
                                 <div>
                                     <strong>Lactancia #<?= (int)$lactancia['numero_lactancia'] ?></strong><br>
-                                    <strong>Parto:</strong> <?= e($lactancia['fecha_parto']) ?><br>
+                                    <strong>Inicio:</strong> <?= e($lactancia['fecha_inicio']) ?><br>
                                     <strong>Periodo con registros:</strong> <?= e($inicioProduccion) ?> - <?= e($finProduccion) ?><br>
                                     <strong>Duración registrada:</strong> <?= (int)$mesesProduccion ?> meses (<?= (int)$duracion ?> días)<br>
                                     <strong>Total:</strong> <?= number_format((float)$lactancia['total_litros'], 2, ',', '.') ?> L<br>

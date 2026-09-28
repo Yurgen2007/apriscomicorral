@@ -4,6 +4,7 @@ if (empty($_SESSION['csrf_token'])) {
 }
 $csrf_token = $_SESSION['csrf_token'];
 
+$esEdicion = isset($control) && is_array($control);
 $control = $control ?? [];
 $id_cabra = $id_cabra ?? ($_POST['id_cabra'] ?? 0);
 $control['id_control'] = $control['id_control'] ?? 0;
@@ -12,13 +13,37 @@ $control['peso_kg'] = $control['peso_kg'] ?? '';
 $control['observaciones'] = $control['observaciones'] ?? '';
 $control['vitaminacion'] = $control['vitaminacion'] ?? '';
 $control['purga'] = $control['purga'] ?? '';
+foreach (
+    [
+        'condicion_especial',
+        'orejas',
+        'mucosas',
+        'famacha',
+        'c_corporal',
+        'drack_score',
+        'genitales',
+        'ubre',
+        'foto_ubre',
+        'sin_muda',
+        'pinzas',
+        'primeros_medios',
+        'segundos_medios',
+        'extremos',
+        'desgaste',
+        'perdidas_dentales',
+        'cascos',
+        'e_interdigital',
+    ] as $campo
+) {
+    $control[$campo] = $control[$campo] ?? '';
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <title><?php echo isset($control) ? 'Editar Control Sanitario' : 'Registrar Control Sanitario'; ?> - <?php echo SITE_NAME; ?></title>
+    <title><?php echo $esEdicion ? 'Editar Control Sanitario' : 'Registrar Control Sanitario'; ?> - <?php echo SITE_NAME; ?></title>
     <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/style.css">
 </head>
 
@@ -26,7 +51,7 @@ $control['purga'] = $control['purga'] ?? '';
     <?php include __DIR__ . '/../../../includes/sidebar.php'; ?>
     <div class="container">
         <header class="dashboard-header">
-            <h1><?php echo isset($control) ? '✏️ Editar Control Sanitario' : '➕ Nuevo Control Sanitario'; ?></h1>
+            <h1><?php echo $esEdicion ? '✏️ Editar Control Sanitario' : '➕ Nuevo Control Sanitario'; ?></h1>
         </header>
 
         <main class="main-content">
@@ -42,7 +67,7 @@ $control['purga'] = $control['purga'] ?? '';
             <?php endif; ?>
 
             <form method="POST" enctype="multipart/form-data"
-                action="<?php echo isset($control) ? BASE_URL . '/controles/' . $control['id_control'] . '/edit' : BASE_URL . '/controles/' . $id_cabra . '/create'; ?>"
+                action="<?php echo $esEdicion ? BASE_URL . '/controles/' . $control['id_control'] . '/edit' : BASE_URL . '/controles/' . $id_cabra . '/create'; ?>"
                 class="cabra-form">
                 <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                 <input type="hidden" name="id_cabra" value="<?php echo $id_cabra; ?>">

@@ -262,45 +262,37 @@ $condicionActualNormalizada = is_array($condicionActual) && !empty($condicionAct
                     <div class="lactation-item">
                         <strong>Lactancia #<?= (int)$lactancia['numero_lactancia'] ?></strong>
                         <span class="badge"><?= e($lactancia['estado']) ?></span>
-                        <br>Parto: <?= e($lactancia['fecha_parto']) ?>
+                        <br>Inicio: <?= e($lactancia['fecha_inicio']) ?>
                         <br>Periodo con registros: <?= e($inicioProduccion) ?> - <?= e($finProduccion) ?>
                         <br>Duración registrada: <?= (int)$mesesProduccion ?> meses (<?= (int)$duracion ?> días)
                         <br>Total: <?= number_format((float)$lactancia['total_litros'], 2, ',', '.') ?> L
                         <br>Máxima: <?= $lactancia['produccion_maxima'] === null ? '-' : number_format((float)$lactancia['produccion_maxima'], 2, ',', '.') . ' L' ?>
                     </div>
                 <?php endforeach; ?>
-                <?php if (empty($lactancias) && !empty($controles)): ?>
-                    <?php
-                    $registrosSinLactancia = array_filter($controles, function ($control) {
-                        return empty($control['id_lactancia']);
-                    });
+                <?php
+                $registrosSinLactancia = array_filter($controles, function ($control) {
+                    return empty($control['id_lactancia']);
+                });
+                if ($registrosSinLactancia):
                     $fechas = array_map(function ($control) {
                         return substr($control['fecha_registro'], 0, 10);
                     }, $registrosSinLactancia);
                     $litros = array_map(function ($control) {
                         return (float)$control['cantidad_litros'];
                     }, $registrosSinLactancia);
-                    $inicioSinLactancia = $fechas ? min($fechas) : null;
-                    $finSinLactancia = $fechas ? max($fechas) : null;
-                    $maximoSinLactancia = $litros ? max($litros) : 0;
-                    $intervaloSinLactancia = $inicioSinLactancia && $finSinLactancia
-                        ? (new DateTime($inicioSinLactancia))->diff(new DateTime($finSinLactancia))
-                        : null;
-                    $numeroLactanciaPendiente = count($lactancias) + 1;
-                    ?>
-                    <?php if ($registrosSinLactancia): ?>
-                        <div class="lactation-item">
-                            <strong>Lactancia #<?= $numeroLactanciaPendiente ?></strong>
-                            <span class="badge"><?= $condicionActualNormalizada === 'vacia' ? 'SECADA' : 'SIN VINCULAR' ?></span>
-                            <br>Periodo registrado: <?= e($inicioSinLactancia) ?> - <?= e($finSinLactancia) ?>
-                            <?php if ($condicionActualNormalizada === 'vacia' && is_array($condicionActual) && !empty($condicionActual['fecha_control'])): ?>
-                                <br>Fecha de cierre sanitario: <?= e(substr($condicionActual['fecha_control'], 0, 10)) ?>
-                            <?php endif; ?>
-                            <br>Duración registrada: <?= $intervaloSinLactancia ? (int)(($intervaloSinLactancia->y * 12) + $intervaloSinLactancia->m) . ' meses (' . ((int)$intervaloSinLactancia->days + 1) . ' días)' : '0 días' ?>
-                            <br>Total: <?= number_format(array_sum($litros), 2, ',', '.') ?> L
-                            <br>Máxima: <?= number_format($maximoSinLactancia, 2, ',', '.') ?> L
-                        </div>
-                    <?php endif; ?>
+                    $inicioSinLactancia = min($fechas);
+                    $finSinLactancia = max($fechas);
+                    $maximoSinLactancia = max($litros);
+                    $intervaloSinLactancia = (new DateTime($inicioSinLactancia))->diff(new DateTime($finSinLactancia));
+                ?>
+                    <div class="lactation-item">
+                        <strong>Producción sin lactancia vinculada</strong>
+                        <span class="badge">HISTÓRICO</span>
+                        <br>Periodo registrado: <?= e($inicioSinLactancia) ?> - <?= e($finSinLactancia) ?>
+                        <br>Duración registrada: <?= (int)(($intervaloSinLactancia->y * 12) + $intervaloSinLactancia->m) ?> meses (<?= (int)$intervaloSinLactancia->days + 1 ?> días)
+                        <br>Total: <?= number_format(array_sum($litros), 2, ',', '.') ?> L
+                        <br>Máxima: <?= number_format($maximoSinLactancia, 2, ',', '.') ?> L
+                    </div>
                 <?php elseif (empty($lactancias)): ?>
                     <p>No hay lactancias registradas.</p>
                 <?php endif; ?>

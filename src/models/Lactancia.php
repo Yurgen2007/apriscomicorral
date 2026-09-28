@@ -12,7 +12,7 @@ class Lactancia
     public function getAll($idCabra = null)
     {
         $where = $idCabra ? 'WHERE l.id_cabra = :id_cabra' : '';
-        $sql = "SELECT l.*, c.nombre AS nombre_cabra, p.fecha_parto,
+        $sql = "SELECT l.*, c.nombre AS nombre_cabra,
                        COALESCE(SUM(cpl.cantidad_litros), 0) AS total_litros,
                        MAX(cpl.cantidad_litros) AS produccion_maxima,
                        MIN(DATE(cpl.fecha_registro)) AS fecha_primer_registro,
@@ -24,10 +24,9 @@ class Lactancia
                        ) THEN cpl.fecha_registro END) AS fecha_produccion_maxima
                 FROM lactancias l
                 INNER JOIN cabras c ON c.id_cabra = l.id_cabra
-                INNER JOIN partos p ON p.id_parto = l.id_parto
                 LEFT JOIN control_produccion_lechera cpl ON cpl.id_lactancia = l.id_lactancia
                 {$where}
-                GROUP BY l.id_lactancia, c.nombre, p.fecha_parto
+                GROUP BY l.id_lactancia, c.nombre
                 ORDER BY l.fecha_inicio DESC";
         $stmt = $this->db->prepare($sql);
         if ($idCabra) {
@@ -83,12 +82,13 @@ class Lactancia
              WHERE id_cabra = :id_cabra
                AND estado = 'EN LACTANCIA'
                AND fecha_inicio <= :fecha_inicio
-               AND (fecha_fin IS NULL OR fecha_fin >= :fecha_fin)"
+               AND (fecha_fin IS NULL OR fecha_fin >= :fecha_fin_condicion)"
         );
         $stmt->execute([
             ':fecha_fin' => $fecha,
             ':id_cabra' => (int)$idCabra,
             ':fecha_inicio' => $fecha,
+            ':fecha_fin_condicion' => $fecha,
         ]);
         return $stmt->rowCount();
     }
@@ -96,10 +96,9 @@ class Lactancia
     public function getById($id)
     {
         $stmt = $this->db->prepare(
-            "SELECT l.*, c.nombre AS nombre_cabra, p.fecha_parto
+            "SELECT l.*, c.nombre AS nombre_cabra
              FROM lactancias l
              INNER JOIN cabras c ON c.id_cabra = l.id_cabra
-             INNER JOIN partos p ON p.id_parto = l.id_parto
              WHERE l.id_lactancia = :id"
         );
         $stmt->execute([':id' => (int)$id]);
@@ -115,46 +114,6 @@ class Lactancia
         );
         $stmt->execute([':id_cabra' => (int)$idCabra]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function getPartosWithoutLactancia($idCabra = null)
-    {
-        $where = $idCabra ? 'AND p.id_madre = :id_cabra' : '';
-        $stmt = $this->db->prepare(
-            "SELECT p.id_parto, p.id_madre, p.fecha_parto, c.nombre AS nombre_cabra
-             FROM partos p INNER JOIN cabras c ON c.id_cabra = p.id_madre
-             LEFT JOIN lactancias l ON l.id_parto = p.id_parto
-             WHERE l.id_lactancia IS NULL {$where}
-             ORDER BY p.fecha_parto DESC"
-        );
-        if ($idCabra) {
-            $stmt->bindValue(':id_cabra', (int)$idCabra, PDO::PARAM_INT);
-        }
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    public function create($idCabra, $idParto)
-    {
-        $stmt = $this->db->prepare(
-            "INSERT INTO lactancias (id_cabra, id_parto, numero_lactancia, fecha_inicio)
-             SELECT :id_cabra, p.id_parto,
-                    COALESCE((
-                        SELECT MAX(l2.numero_lactancia) + 1
-                        FROM lactancias l2
-                        WHERE l2.id_cabra = :id_cabra_3
-                    ), 1),
-                    DATE(p.fecha_parto)
-             FROM partos p
-             WHERE p.id_parto = :id_parto AND p.id_madre = :id_cabra_2
-               AND NOT EXISTS (SELECT 1 FROM lactancias l WHERE l.id_parto = p.id_parto)"
-        );
-        return $stmt->execute([
-            ':id_cabra' => (int)$idCabra,
-            ':id_parto' => (int)$idParto,
-            ':id_cabra_2' => (int)$idCabra,
-            ':id_cabra_3' => (int)$idCabra
-        ]);
     }
 
     public function getOrCreateActive($idCabra, $fecha)
@@ -173,33 +132,21 @@ class Lactancia
         }
 
         $stmt = $this->db->prepare(
-            "SELECT p.id_parto
-             FROM partos p
-             LEFT JOIN lactancias l ON l.id_parto = p.id_parto
-             WHERE p.id_madre = :id_cabra
-               AND DATE(p.fecha_parto) <= :fecha
-               AND l.id_lactancia IS NULL
-             ORDER BY p.fecha_parto DESC, p.id_parto DESC
-             LIMIT 1"
-        );
-        $stmt->execute([':id_cabra' => (int)$idCabra, ':fecha' => $fecha]);
-        $idParto = $stmt->fetchColumn();
-        if (!$idParto || !$this->create($idCabra, (int)$idParto)) {
-            return null;
-        }
-
-        $stmt = $this->db->prepare(
-            "SELECT id_lactancia
+            "INSERT INTO lactancias (id_cabra, numero_lactancia, fecha_inicio, estado)
+             SELECT :id_cabra_insert, COALESCE(MAX(numero_lactancia), 0) + 1,
+                    :fecha_inicio, 'EN LACTANCIA'
              FROM lactancias
-             WHERE id_cabra = :id_cabra AND id_parto = :id_parto
-             LIMIT 1"
+             WHERE id_cabra = :id_cabra_max"
         );
         $stmt->execute([
-            ':id_cabra' => (int)$idCabra,
-            ':id_parto' => (int)$idParto
+            ':id_cabra_insert' => (int)$idCabra,
+            ':fecha_inicio' => $fecha,
+            ':id_cabra_max' => (int)$idCabra,
         ]);
-        $idLactancia = $stmt->fetchColumn();
-        return $idLactancia ? (int)$idLactancia : null;
+        if ($stmt->rowCount() !== 1) {
+            return null;
+        }
+        return (int)$this->db->lastInsertId();
     }
 
     public function finish($id, $fechaFin)

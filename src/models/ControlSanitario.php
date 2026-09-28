@@ -1,13 +1,16 @@
 <?php
 // src/models/ControlSanitario.php
-class ControlSanitario {
+class ControlSanitario
+{
     private $db;
 
-    public function __construct($db) {
+    public function __construct($db)
+    {
         $this->db = $db;
     }
 
-    public function getByCabra($id_cabra) {
+    public function getByCabra($id_cabra)
+    {
         $sql = "SELECT cs.*, u.nombre AS nombre_usuario
                 FROM controles_sanitarios cs
                 LEFT JOIN usuarios u ON cs.registrado_por = u.id
@@ -19,7 +22,8 @@ class ControlSanitario {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function getById($id_control) {
+    public function getById($id_control)
+    {
         $sql = "SELECT * FROM controles_sanitarios WHERE id_control = :id";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':id', $id_control, PDO::PARAM_INT);
@@ -27,7 +31,8 @@ class ControlSanitario {
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    public function create($data) {
+    public function create($data)
+    {
         $sql = "INSERT INTO controles_sanitarios (
                     id_cabra, fecha_control, peso_kg, peso_nacer_kg, condicion_especial,
                     orejas, mucosas, vitaminacion, purga, observaciones, registrado_por,
@@ -47,7 +52,7 @@ class ControlSanitario {
             ':id_cabra' => $data['id_cabra'],
             ':fecha_control' => $data['fecha_control'],
             ':peso_kg' => $data['peso_kg'],
-            ':peso_nacer_kg' => $data['peso_nacer_kg'],
+            ':peso_nacer_kg' => $data['peso_nacer_kg'] ?? null,
             ':condicion_especial' => $data['condicion_especial'],
             ':orejas' => $data['orejas'],
             ':mucosas' => $data['mucosas'],
@@ -73,7 +78,8 @@ class ControlSanitario {
         ]);
     }
 
-    public function update($id, $data) {
+    public function update($id, $data)
+    {
         $sql = "UPDATE controles_sanitarios SET
                     id_cabra = :id_cabra,
                     fecha_control = :fecha_control,
@@ -103,11 +109,38 @@ class ControlSanitario {
                 WHERE id_control = :id";
 
         $stmt = $this->db->prepare($sql);
-        $data['id'] = $id;
-        return $stmt->execute($data);
+        return $stmt->execute([
+            ':id_cabra' => $data['id_cabra'] ?? null,
+            ':fecha_control' => $data['fecha_control'] ?? null,
+            ':peso_kg' => $data['peso_kg'] ?? null,
+            ':peso_nacer_kg' => $data['peso_nacer_kg'] ?? null,
+            ':condicion_especial' => $data['condicion_especial'] ?? null,
+            ':orejas' => $data['orejas'] ?? null,
+            ':mucosas' => $data['mucosas'] ?? null,
+            ':vitaminacion' => $data['vitaminacion'] ?? null,
+            ':purga' => $data['purga'] ?? null,
+            ':observaciones' => $data['observaciones'] ?? null,
+            ':c_corporal' => $data['c_corporal'] ?? null,
+            ':genitales' => $data['genitales'] ?? null,
+            ':ubre' => $data['ubre'] ?? null,
+            ':foto_ubre' => $data['foto_ubre'] ?? null,
+            ':drack_score' => $data['drack_score'] ?? null,
+            ':famacha' => $data['famacha'] ?? null,
+            ':sin_muda' => $data['sin_muda'] ?? null,
+            ':pinzas' => $data['pinzas'] ?? null,
+            ':primeros_medios' => $data['primeros_medios'] ?? null,
+            ':segundos_medios' => $data['segundos_medios'] ?? null,
+            ':extremos' => $data['extremos'] ?? null,
+            ':desgaste' => $data['desgaste'] ?? null,
+            ':perdidas_dentales' => $data['perdidas_dentales'] ?? null,
+            ':cascos' => $data['cascos'] ?? null,
+            ':e_interdigital' => $data['e_interdigital'] ?? null,
+            ':id' => $id,
+        ]);
     }
 
-    public function delete($id_control) {
+    public function delete($id_control)
+    {
         $sql = "DELETE FROM controles_sanitarios WHERE id_control = :id";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':id', $id_control, PDO::PARAM_INT);

@@ -24,8 +24,8 @@ $cabra['estado'] = $cabra['estado'] ?? 'ACTIVA';
 </head>
 
 <body>
+    <?php include __DIR__ . '/../../../includes/sidebar.php'; ?>
     <div class="container">
-        <?php include __DIR__ . '/../../../includes/sidebar.php'; ?>
         <header class="dashboard-header">
             <h1>🐐 Editar: <?php echo e($cabra['nombre']); ?></h1>
         </header>

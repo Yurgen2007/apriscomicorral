@@ -75,6 +75,11 @@ class ControlSanitarioController {
         if (!$this->isLoggedIn()) $this->redirectToLogin();
         $id = $this->getIdFromUrl();
         $control = $this->model->getById($id);
+        if (!$control) {
+            $_SESSION['error'] = 'El control sanitario no existe';
+            header('Location: ' . BASE_URL . '/cabras');
+            exit();
+        }
         $csrf_token = generateCSRFToken();
 
         $this->loadView('create_edit', [
@@ -95,6 +100,10 @@ class ControlSanitarioController {
 
         $data = $this->getDataFromRequest();
         $existing = $this->model->getById($id);
+        if (!$existing) {
+            $_SESSION['error'] = 'El control sanitario no existe';
+            $this->redirectToCabra($data['id_cabra'] ?? 0);
+        }
 
         $foto = $this->handleUbreUpload();
         $data['foto_ubre'] = $foto ?? $existing['foto_ubre'];

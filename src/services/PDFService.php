@@ -6,6 +6,7 @@ require_once __DIR__ . '/../models/EventoReproductivo.php';
 require_once __DIR__ . '/../models/HistorialPropiedad.php';
 require_once __DIR__ . '/../models/ControlSanitario.php';
 require_once __DIR__ . '/../models/DocumentosCabras.php';
+require_once __DIR__ . '/../models/Lactancia.php';
 
 class PDFService
 {
@@ -624,6 +625,7 @@ class PDFService
         $historialModel = new HistorialPropiedad($this->db);
         $controlModel = new ControlSanitario($this->db);
         $docModel = new DocumentosCabras($this->db);
+        $lactanciaModel = new Lactancia($this->db);
 
 
 
@@ -633,6 +635,7 @@ class PDFService
         $historial = $historialModel->getByCabra($id_cabra);
         $controles = $controlModel->getByCabra($id_cabra);
         $documentos = $docModel->getByCabra($id_cabra);
+        $lactancias = $lactanciaModel->getAll($id_cabra);
 
         // ==========================================
         // REGISTROS PARA MOSTRAR EN EL PDF
@@ -818,6 +821,37 @@ class PDFService
 
                 $colorTarjeta = ($dificultad === 'Alta') ? $this->colorRojo : $this->colorVerde;
                 $this->dibujarTarjeta($contenido, $colorTarjeta,);
+                $this->verificarNuevaPagina();
+            }
+        }
+
+        // HISTORIAL DE LACTANCIAS: todos los ciclos registrados
+        $this->dibujarSeccion('HISTORIAL DE LACTANCIAS');
+
+        if (empty($lactancias)) {
+            $this->pdf->SetFont('Arial', 'I', 11);
+            $this->pdf->SetTextColor($this->colorTierra[0], $this->colorTierra[1], $this->colorTierra[2]);
+            $this->pdf->Cell(0, 10, 'No hay lactancias registradas.', 0, 1, 'C');
+            $this->pdf->Ln(5);
+        } else {
+            foreach ($lactancias as $lactancia) {
+                $this->verificarNuevaPagina(35);
+                $fechaFin = $lactancia['fecha_fin'] ?: 'ACTUAL';
+                $fechaProduccion = $lactancia['fecha_primer_registro']
+                    ? $lactancia['fecha_primer_registro'] . ' - ' . $lactancia['fecha_ultimo_registro']
+                    : 'Sin producción registrada';
+                $totalLitros = number_format((float)$lactancia['total_litros'], 2, ',', '.') . ' L';
+                $maxima = $lactancia['produccion_maxima'] === null
+                    ? 'No registrada'
+                    : number_format((float)$lactancia['produccion_maxima'], 2, ',', '.') . ' L';
+
+                $contenido = 'LACTANCIA #' . (int)$lactancia['numero_lactancia'] . ' | ESTADO: ' . $lactancia['estado'] . "\n";
+                $contenido .= 'PERIODO: ' . $lactancia['fecha_inicio'] . ' - ' . $fechaFin . "\n";
+                $contenido .= 'REGISTROS DE PRODUCCION: ' . $fechaProduccion . "\n";
+                $contenido .= 'TOTAL: ' . $totalLitros . ' | MAXIMA: ' . $maxima;
+
+                $colorTarjeta = $lactancia['estado'] === 'EN LACTANCIA' ? $this->colorVerde : $this->colorTierra;
+                $this->dibujarTarjeta($contenido, $colorTarjeta);
                 $this->verificarNuevaPagina();
             }
         }

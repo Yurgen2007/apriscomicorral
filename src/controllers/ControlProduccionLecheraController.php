@@ -109,7 +109,7 @@ class ControlProduccionLecheraController
             $aniosCabra[(int)date('Y', strtotime($control['fecha_registro']))] = true;
         }
         foreach ($lactancias as $lactancia) {
-            $fechaLactancia = $lactancia['fecha_inicio'] ?: $lactancia['fecha_parto'];
+            $fechaLactancia = $lactancia['fecha_inicio'];
             if ($fechaLactancia) {
                 $aniosCabra[(int)date('Y', strtotime($fechaLactancia))] = true;
             }
@@ -123,7 +123,7 @@ class ControlProduccionLecheraController
                 return (int)date('Y', strtotime($control['fecha_registro'])) === $anioCabra;
             }));
             $lactancias = array_values(array_filter($lactancias, static function ($lactancia) use ($anioCabra) {
-                $fecha = $lactancia['fecha_inicio'] ?: $lactancia['fecha_parto'];
+                $fecha = $lactancia['fecha_inicio'];
                 return $fecha && (int)date('Y', strtotime($fecha)) === $anioCabra;
             }));
         }
@@ -205,6 +205,11 @@ class ControlProduccionLecheraController
         }
 
         $id_lactancia = $this->service->getOrCreateActiveLactancia((int)$id_cabra, $fecha_registro);
+        if (!$id_lactancia) {
+            $_SESSION['error'] = 'No fue posible iniciar una nueva lactancia para esta cabra.';
+            header('Location: ' . BASE_URL . '/control-produccion-lechera/create');
+            exit;
+        }
 
         $resultado = $this->service->create(
             (int)$id_cabra,
